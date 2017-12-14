@@ -1,0 +1,4 @@
+struct SerializedTypeKeyed {
+    @key octet       key_hash[16];
+	sequence<octet>  buffer;
+};
