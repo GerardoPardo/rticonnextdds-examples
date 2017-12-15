@@ -57,6 +57,7 @@ static int publisher_main(int domainId, int sample_count)
     const char *type_name = NULL;
     int count = 0;  
     struct DDS_Duration_t send_period = {4,0};
+	int sequence_length;
 
     /* To customize participant QoS, use 
     the configuration file USER_QOS_PROFILES.xml */
@@ -136,6 +137,9 @@ static int publisher_main(int domainId, int sample_count)
     */
 
     /* Main loop */
+	sequence_length = 34;
+	DDS_OctetSeq_ensure_length(&(instance->buffer), sequence_length, sequence_length);
+
     for (count=0; (sample_count == 0) || (count < sample_count); ++count) {
 
         printf("Writing SerializedTypeKeyed, count %d\n", count);
@@ -143,9 +147,8 @@ static int publisher_main(int domainId, int sample_count)
         /* Modify the data to be written here */
         /* Write data */
 		instance->key_hash[0] = (char)count % 256;
-		DDS_OctetSeq_ensure_length(&(instance->buffer), 16, 16);
-		DDS_Octet *elem = DDS_OctetSeq_get_reference(&(instance->buffer), count % 16);
-		*elem = (DDS_Octet)(count + 16) % 256;
+		DDS_Octet *elem = DDS_OctetSeq_get_reference(&(instance->buffer), count % sequence_length);
+		*elem = (DDS_Octet)(count % 256);
 
         retcode = SerializedTypeKeyedDataWriter_write(
             SerializedTypeKeyed_writer, instance, &instance_handle);

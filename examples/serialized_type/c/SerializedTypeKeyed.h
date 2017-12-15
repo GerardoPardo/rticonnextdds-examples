@@ -9,8 +9,8 @@ For more information, type 'rtiddsgen -help' at a command shell
 or consult the RTI Connext manual.
 */
 
-#ifndef SerializedTypeKeyed_1719073535_h
-#define SerializedTypeKeyed_1719073535_h
+#ifndef SerializedTypeKeyed_1719073588_h
+#define SerializedTypeKeyed_1719073588_h
 
 #ifndef NDDS_STANDALONE_TYPE
 #ifndef ndds_c_h
@@ -20,11 +20,13 @@ or consult the RTI Connext manual.
 #include "ndds_standalone_type.h"
 #endif
 
+#define KEY_HASH_LENGTH_16 (16)
+
 extern const char *SerializedTypeKeyedTYPENAME;
 
 typedef struct SerializedTypeKeyed {
 
-    DDS_Octet   key_hash [16];
+    DDS_Octet   key_hash [(KEY_HASH_LENGTH_16)];
     struct    DDS_OctetSeq  buffer ;
 
 } SerializedTypeKeyed ;

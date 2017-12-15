@@ -147,8 +147,11 @@ SerializedTypeKeyedPluginSupport_print_data(
     const char *desc,
     unsigned int indent_level)
 {
+	unsigned int  i, row, col;
+	unsigned int  length;
+	unsigned char *pByte;
 
-    RTICdrType_printIndent(indent_level);
+	RTICdrType_printIndent(indent_level);
 
     if (desc != NULL) {
         RTILog_debug("%s:\n", desc);
@@ -161,27 +164,48 @@ SerializedTypeKeyedPluginSupport_print_data(
         return;
     }
 
-    RTICdrType_printArray(
-        sample->key_hash, (16), RTI_CDR_OCTET_SIZE,
-        (RTICdrTypePrintFunction)RTICdrType_printOctet, 
-        "key_hash", indent_level + 1);        
+	RTICdrType_printVariableSizedInteger(sample->key_hash, "key_hash", indent_level + 1, KEY_HASH_LENGTH_16);
+	RTICdrType_printPrimitivePreamble(&sample->buffer, "buffer", indent_level + 1);
+		
+	pByte     = DDS_OctetSeq_get_contiguous_bufferI(&sample->buffer);
+	length = DDS_OctetSeq_get_length(&sample->buffer);
 
-    if (DDS_OctetSeq_get_contiguous_bufferI(&sample->buffer) != NULL) {
-        RTICdrType_printArray(
-            DDS_OctetSeq_get_contiguous_bufferI(&sample->buffer),
-            DDS_OctetSeq_get_length(&sample->buffer),
-            RTI_CDR_OCTET_SIZE,
-            (RTICdrTypePrintFunction)RTICdrType_printOctet,
-            "buffer", indent_level + 1);
-    } else {
-        RTICdrType_printPointerArray(
-            DDS_OctetSeq_get_discontiguous_bufferI(&sample->buffer),
-            DDS_OctetSeq_get_length(&sample->buffer ),
-            (RTICdrTypePrintFunction)RTICdrType_printOctet,
-            "buffer", indent_level + 1);
-    }
+#define AS_CHAR(x) (isprint(x)?(x):'.')
 
+#define BYTES_PER_ROW (16)
+
+	for (row = 0; ; ++row) {
+		i = row * BYTES_PER_ROW;
+		RTILog_debug("\n");
+		RTICdrType_printIndent(indent_level + 2);
+		RTILog_debug("%04x  ", i);
+
+		for (col = 0; col < BYTES_PER_ROW; ++col, ++i) {
+			if (i < length) {
+				RTILog_debug("%02x ", pByte[i]);
+			}
+			else {
+				RTILog_debug("   ");
+			}
+			if (col == (BYTES_PER_ROW/2 -1) ) { RTILog_debug(" "); }
+		}
+
+		RTILog_debug("   ");
+		i = row * BYTES_PER_ROW;
+		for (col = 0, i = row * BYTES_PER_ROW; col < BYTES_PER_ROW; ++col, ++i) {
+			if (i >= length) {
+				break;
+			}
+			RTILog_debug("%c", AS_CHAR(pByte[i]) );
+			if (col == (BYTES_PER_ROW / 2 - 1)) { RTILog_debug(" "); }
+		}
+		if (i >= length) {
+			break;
+		}
+	}
+	RTILog_debug("\n");
 }
+
 SerializedTypeKeyed *
 SerializedTypeKeyedPluginSupport_create_key_ex(RTIBool allocate_pointers){
     SerializedTypeKeyed *key = NULL;
@@ -374,31 +398,30 @@ SerializedTypeKeyedPlugin_serialize(
 
     if(serialize_sample) {
 
-        if (!RTICdrStream_serializePrimitiveArray(
-            stream, (void*) sample->key_hash, (16), RTI_CDR_OCTET_TYPE)) {
-            return RTI_FALSE;
-        }
 
-        if (DDS_OctetSeq_get_contiguous_bufferI(&sample->buffer) != NULL) {
-            if (!RTICdrStream_serializePrimitiveSequence(
-                stream,
-                DDS_OctetSeq_get_contiguous_bufferI(&sample->buffer),
-                DDS_OctetSeq_get_length(&sample->buffer),
-                (100),
-                RTI_CDR_OCTET_TYPE)) {
-                return RTI_FALSE;
-            } 
-        } else {
-            if (!RTICdrStream_serializePrimitivePointerSequence(
-                stream,
-                (const void **) DDS_OctetSeq_get_discontiguous_bufferI(&sample->buffer),
-                DDS_OctetSeq_get_length(&sample->buffer),
-                (100), 
-                RTI_CDR_OCTET_TYPE)) {
-                return RTI_FALSE;
-            } 
-        }
+		// The sample->buffer contains the serialized data, so we only need to copy that into
+		// the CDR stream. Not the key_hash, nor the length of the data itself
+		// The SerilizedType sample->buffer is always a contiguous buffer
 
+		/*
+		if (!RTICdrStream_serializePrimitiveArray(
+		stream, (void*) sample->key_hash, (KEY_HASH_LENGTH_16), RTI_CDR_OCTET_TYPE)) {
+		return RTI_FALSE;
+		}
+		*/
+
+		DDS_Octet *buffer = DDS_OctetSeq_get_contiguous_bufferI(&sample->buffer);
+		if ( buffer == NULL ) {
+			return RTI_FALSE;
+		}
+
+		/* Use RTICdrStream_serializePrimitiveArray so that there is no additional length prepended */
+		if (!RTICdrStream_serializePrimitiveArray(
+				stream, (void*)buffer,
+			DDS_OctetSeq_get_length(&sample->buffer),
+			RTI_CDR_OCTET_TYPE)) {
+			return RTI_FALSE;
+		}
     }
 
     if(serialize_encapsulation) {
@@ -417,71 +440,76 @@ SerializedTypeKeyedPlugin_deserialize_sample(
     RTIBool deserialize_sample, 
     void *endpoint_plugin_qos)
 {
-
     char * position = NULL;
-
     RTIBool done = RTI_FALSE;
 
     if (endpoint_data) {} /* To avoid warnings */
     if (endpoint_plugin_qos) {} /* To avoid warnings */
-    if(deserialize_encapsulation) {
+   
+	if (deserialize_encapsulation) {
 
-        if (!RTICdrStream_deserializeAndSetCdrEncapsulation(stream)) {
-            return RTI_FALSE;
-        }
+		if (!RTICdrStream_deserializeAndSetCdrEncapsulation(stream)) {
+			return RTI_FALSE;
+		}
+		position = RTICdrStream_resetAlignment(stream);
 
-        position = RTICdrStream_resetAlignment(stream);
-    }
+		{
+			/* TODO. This does not belong here. It should be pushed to the CDR module to that the
+			   stream size is correct when this function is called. */
+			   /* Based on the encapsulation_options we can adjust the size of the CDR stream to remove
+				  the alignment padding. See http://issues.omg.org/browse/DDSXTY12-10 */
+			DDS_UnsignedShort padding_size_mask = 0x0003;
+			DDS_UnsignedShort padding_size;
+			int adjustedBufferLength;
+
+			padding_size = RTICdrStream_getEncapsulationOptions(stream) & padding_size_mask;
+			adjustedBufferLength = RTICdrStream_getBufferLength(stream) - padding_size;
+			RTICdrStream_setBufferLength(stream, adjustedBufferLength);
+			if (padding_size != 0) {
+				RTILog_debug("DEBUG: Adjusted Length to compensate for %d of padding\n", (int)padding_size);
+			}
+		}
+	}
+	else {
+		/* The deserialization of the data as a serialized block only works if we are deserialing everything 
+		   that remains in the CDR stream, therefore we require that deserialize_encapsulation == TRUE */
+		return RTI_FALSE;
+	}
+
     if(deserialize_sample) {
+		/* TODO: We should pass the SampleInfo / Meta-Data to the deserialization. Having the
+		KeyHash and publication_guid/handle can be very useful in deserialization.
+		In this case it would allow the Key to be re-created.
+		In the meantime we cannot set the key field correctly so we intialize to 0xFF
+		*/
+		memset(sample->key_hash, 0xFF, KEY_HASH_LENGTH_16);
 
-        SerializedTypeKeyed_initialize_ex(sample, RTI_FALSE, RTI_FALSE);
+		/* This only works if we are deserialing everything that remains in the CDR stream */
+		int bytesLeftInStream = RTICdrStream_getRemainder(stream);
+		DDS_Octet *cdrBufferPtr  = RTICdrStream_getCurrentPosition(stream);
+		if (cdrBufferPtr == NULL) {
+			goto fin;
+		}
 
-        if (!RTICdrStream_deserializePrimitiveArray(
-            stream, (void*) sample->key_hash, (16), RTI_CDR_OCTET_TYPE)) {
-            goto fin; 
-        }
-
-        {
-            RTICdrUnsignedLong sequence_length;
-            if (DDS_OctetSeq_get_contiguous_bufferI(&sample->buffer) != NULL) {
-                if (!RTICdrStream_deserializePrimitiveSequence(
-                    stream,
-                    DDS_OctetSeq_get_contiguous_bufferI(&sample->buffer),
-                    &sequence_length,
-                    DDS_OctetSeq_get_maximum(&sample->buffer),
-                    RTI_CDR_OCTET_TYPE)){
-                    goto fin; 
-                }
-            } else {
-                if (!RTICdrStream_deserializePrimitivePointerSequence(
-                    stream,
-                    (void **) DDS_OctetSeq_get_discontiguous_bufferI(&sample->buffer),
-                    &sequence_length,
-                    DDS_OctetSeq_get_maximum(&sample->buffer),
-                    RTI_CDR_OCTET_TYPE)){
-                    goto fin; 
-                }
-            }
-            if (!DDS_OctetSeq_set_length(&sample->buffer, sequence_length)) {
-                return RTI_FALSE;
-            }
-
-        }
+		SerializedTypeKeyed_initialize_ex(sample, RTI_FALSE, RTI_FALSE);
+		if (!DDS_OctetSeq_from_array(&sample->buffer, cdrBufferPtr, bytesLeftInStream) ) {
+			goto fin;
+		}
+		RTICdrStream_incrementCurrentPosition(stream, bytesLeftInStream);
     }
 
     done = RTI_TRUE;
+
   fin:
-    if (done != RTI_TRUE && 
-    RTICdrStream_getRemainder(stream) >=
-    RTI_CDR_PARAMETER_HEADER_ALIGNMENT) {
+    if ( (done != RTI_TRUE) && 
+		 (RTICdrStream_getRemainder(stream) >= RTI_CDR_PARAMETER_HEADER_ALIGNMENT) ) {
         return RTI_FALSE;   
     }
-    if(deserialize_encapsulation) {
+    if (deserialize_encapsulation) {
         RTICdrStream_restoreAlignment(stream,position);
     }
 
     return RTI_TRUE;
-
 }
 
 RTIBool
@@ -678,50 +706,13 @@ RTIBool SerializedTypeKeyedPlugin_skip(
     RTIBool skip_sample, 
     void *endpoint_plugin_qos)
 {
-    char * position = NULL;
+	/* TODO */
+	/* This function can only be implemented if we are using XCDR version 2 and
+	   the type is either APPENDABLE or MUTABLE because those types are wrapped by
+	   a length.
+	   */
 
-    RTIBool done = RTI_FALSE;
-
-    if (endpoint_data) {} /* To avoid warnings */
-    if (endpoint_plugin_qos) {} /* To avoid warnings */
-
-    if(skip_encapsulation) {
-        if (!RTICdrStream_skipEncapsulation(stream)) {
-            return RTI_FALSE;
-        }
-
-        position = RTICdrStream_resetAlignment(stream);
-    }
-
-    if (skip_sample) {
-
-        if (!RTICdrStream_skipPrimitiveArray(
-            stream, (16), RTI_CDR_OCTET_TYPE)) {
-            goto fin; 
-        }      
-        {
-            RTICdrUnsignedLong sequence_length;
-            if (!RTICdrStream_skipPrimitiveSequence(
-                stream,
-                &sequence_length,
-                RTI_CDR_OCTET_TYPE)){
-                goto fin; 
-            }
-        }
-    }
-
-    done = RTI_TRUE;
-  fin:
-    if (done != RTI_TRUE && 
-    RTICdrStream_getRemainder(stream) >=
-    RTI_CDR_PARAMETER_HEADER_ALIGNMENT) {
-        return RTI_FALSE;   
-    }
-    if(skip_encapsulation) {
-        RTICdrStream_restoreAlignment(stream,position);
-    }
-
-    return RTI_TRUE;
+    return RTI_FALSE;
 }
 
 unsigned int 
@@ -732,35 +723,9 @@ SerializedTypeKeyedPlugin_get_serialized_sample_max_size_ex(
     RTIEncapsulationId encapsulation_id,
     unsigned int current_alignment)
 {
-
-    unsigned int initial_alignment = current_alignment;
-
-    unsigned int encapsulation_size = current_alignment;
-
-    if (endpoint_data) {} /* To avoid warnings */ 
-    if (overflow) {} /* To avoid warnings */
-
-    if (include_encapsulation) {
-
-        if (!RTICdrEncapsulation_validEncapsulationId(encapsulation_id)) {
-            return 1;
-        }
-        RTICdrStream_getEncapsulationSize(encapsulation_size);
-        encapsulation_size -= current_alignment;
-        current_alignment = 0;
-        initial_alignment = 0;
-    }
-
-    current_alignment +=RTICdrType_getPrimitiveArrayMaxSizeSerialized(
-        current_alignment, (16),  RTI_CDR_OCTET_TYPE);
-
-    current_alignment +=RTICdrType_getPrimitiveSequenceMaxSizeSerialized(
-        current_alignment,(100),RTI_CDR_OCTET_TYPE) ;
-
-    if (include_encapsulation) {
-        current_alignment += encapsulation_size;
-    }
-    return  current_alignment - initial_alignment;
+	/* TODO */
+	/* This would need to use DynamicData and the TypeCode */
+	return 1024;
 }
 
 unsigned int 
@@ -808,10 +773,9 @@ SerializedTypeKeyedPlugin_get_serialized_sample_min_size(
         initial_alignment = 0;
     }
 
-    current_alignment +=RTICdrType_getPrimitiveArrayMaxSizeSerialized(
-        current_alignment, (16), RTI_CDR_OCTET_TYPE);
-    current_alignment +=    RTICdrType_getPrimitiveSequenceMaxSizeSerialized(
-        current_alignment,0, RTI_CDR_OCTET_TYPE);
+	/* TODO */
+	/* Unclear what we can return here. May need to use the DynamicData */
+	current_alignment += 4;
 
     if (include_encapsulation) {
         current_alignment += encapsulation_size;
@@ -863,16 +827,8 @@ SerializedTypeKeyedPlugin_get_serialized_sample_size(
             current_alignment);
     }
 
-    current_alignment += RTICdrType_getPrimitiveArrayMaxSizeSerialized(
-        PRESTypePluginDefaultEndpointData_getAlignment(
-            endpoint_data, current_alignment), 
-            (16), RTI_CDR_OCTET_TYPE);  
-
-    current_alignment += RTICdrType_getPrimitiveSequenceSerializedSize(
-        PRESTypePluginDefaultEndpointData_getAlignment(
-            endpoint_data, current_alignment), 
-            DDS_OctetSeq_get_length(&sample->buffer),
-            RTI_CDR_OCTET_TYPE);
+	/* The length of teh serialized data is what is kept in the unerlying sequence */
+	current_alignment += DDS_OctetSeq_get_length(&sample->buffer);
 
     if (include_encapsulation) {
         current_alignment += encapsulation_size;
@@ -914,12 +870,11 @@ SerializedTypeKeyedPlugin_serialize_key(
     }
 
     if(serialize_key) {
-
-        if (!RTICdrStream_serializePrimitiveArray(
-            stream, (void*) sample->key_hash, (16), RTI_CDR_OCTET_TYPE)) {
-            return RTI_FALSE;
-        }
-
+		if (!RTICdrStream_checkSize(stream, KEY_HASH_LENGTH_16)) {
+			return RTI_FALSE;
+		}
+		RTIOsapiMemory_copy(RTICdrStream_getCurrentPosition(stream), sample->key_hash, KEY_HASH_LENGTH_16);
+		RTICdrStream_incrementCurrentPosition(stream, KEY_HASH_LENGTH_16);
     }
 
     if(serialize_encapsulation) {
@@ -954,7 +909,7 @@ RTIBool SerializedTypeKeyedPlugin_deserialize_key_sample(
     if (deserialize_key) {
 
         if (!RTICdrStream_deserializePrimitiveArray(
-            stream, (void*) sample->key_hash, (16), RTI_CDR_OCTET_TYPE)) {
+            stream, (void*) sample->key_hash, (KEY_HASH_LENGTH_16), RTI_CDR_OCTET_TYPE)) {
             return RTI_FALSE;
         }
 
@@ -1001,32 +956,7 @@ SerializedTypeKeyedPlugin_get_serialized_key_max_size_ex(
     RTIEncapsulationId encapsulation_id,
     unsigned int current_alignment)
 {
-
-    unsigned int initial_alignment = current_alignment;
-
-    unsigned int encapsulation_size = current_alignment;
-
-    if (endpoint_data) {} /* To avoid warnings */
-    if (overflow) {} /* To avoid warnings */
-
-    if (include_encapsulation) {
-
-        if (!RTICdrEncapsulation_validEncapsulationId(encapsulation_id)) {
-            return 1;
-        }
-        RTICdrStream_getEncapsulationSize(encapsulation_size);
-        encapsulation_size -= current_alignment;
-        current_alignment = 0;
-        initial_alignment = 0;
-    }
-
-    current_alignment +=RTICdrType_getPrimitiveArrayMaxSizeSerialized(
-        current_alignment, (16),  RTI_CDR_OCTET_TYPE);
-
-    if (include_encapsulation) {
-        current_alignment += encapsulation_size;
-    }
-    return current_alignment - initial_alignment;
+    return KEY_HASH_LENGTH_16;
 }
 
 unsigned int
@@ -1036,17 +966,29 @@ SerializedTypeKeyedPlugin_get_serialized_key_max_size(
     RTIEncapsulationId encapsulation_id,
     unsigned int current_alignment)
 {
-    unsigned int size;
-    RTIBool overflow = RTI_FALSE;
+	unsigned int initial_alignment = current_alignment;
+	unsigned int encapsulation_size = current_alignment;
 
-    size = SerializedTypeKeyedPlugin_get_serialized_key_max_size_ex(
-        endpoint_data,&overflow,include_encapsulation,encapsulation_id,current_alignment);
+	if (endpoint_data) {} /* To avoid warnings */
 
-    if (overflow) {
-        size = RTI_CDR_MAX_SERIALIZED_SIZE;
-    }
+	if (include_encapsulation) {
 
-    return size;
+		if (!RTICdrEncapsulation_validEncapsulationId(encapsulation_id)) {
+			return 1;
+		}
+		RTICdrStream_getEncapsulationSize(encapsulation_size);
+		encapsulation_size -= current_alignment;
+		current_alignment = 0;
+		initial_alignment = 0;
+	}
+
+	current_alignment += KEY_HASH_LENGTH_16;
+
+	if (include_encapsulation) {
+		current_alignment += encapsulation_size;
+	}
+
+	return current_alignment - initial_alignment;
 }
 
 RTIBool 
@@ -1058,61 +1000,9 @@ SerializedTypeKeyedPlugin_serialized_sample_to_key(
     RTIBool deserialize_key, 
     void *endpoint_plugin_qos)
 {
-    char * position = NULL;
-
-    RTIBool done = RTI_FALSE;
-    RTIBool error = RTI_FALSE;
-
-    if (endpoint_data) {} /* To avoid warnings */
-    if (endpoint_plugin_qos) {} /* To avoid warnings */
-
-    if (stream == NULL) {
-        error = RTI_TRUE;
-        goto fin;
-    }
-    if(deserialize_encapsulation) {
-        if (!RTICdrStream_deserializeAndSetCdrEncapsulation(stream)) {
-            return RTI_FALSE;
-        }
-        position = RTICdrStream_resetAlignment(stream);
-    }
-
-    if (deserialize_key) {
-
-        if (!RTICdrStream_deserializePrimitiveArray(
-            stream, (void*) sample->key_hash, (16), RTI_CDR_OCTET_TYPE)) {
-            return RTI_FALSE;
-        }
-
-        {
-            RTICdrUnsignedLong sequence_length;
-            if (!RTICdrStream_skipPrimitiveSequence(
-                stream,
-                &sequence_length,
-                RTI_CDR_OCTET_TYPE)){
-                goto fin; 
-            }
-        }
-
-    }
-
-    done = RTI_TRUE;
-  fin:
-    if(!error) {
-        if (done != RTI_TRUE && 
-        RTICdrStream_getRemainder(stream) >=
-        RTI_CDR_PARAMETER_HEADER_ALIGNMENT) {
-            return RTI_FALSE;   
-        }
-    } else {
-        return RTI_FALSE;
-    }       
-
-    if(deserialize_encapsulation) {
-        RTICdrStream_restoreAlignment(stream,position);
-    }
-
-    return RTI_TRUE;
+	/* TODO */
+	/* This would need to use DynamicData */
+	return RTI_FALSE;
 }
 
 RTIBool 
@@ -1121,11 +1011,10 @@ SerializedTypeKeyedPlugin_instance_to_key(
     SerializedTypeKeyedKeyHolder *dst, 
     const SerializedTypeKeyed *src)
 {
-
     if (endpoint_data) {} /* To avoid warnings */   
 
     if (!RTICdrType_copyArray(
-        dst->key_hash ,src->key_hash,(16), RTI_CDR_OCTET_SIZE)) {
+        dst->key_hash ,src->key_hash,(KEY_HASH_LENGTH_16), RTI_CDR_OCTET_SIZE)) {
         return RTI_FALSE;
     }
     return RTI_TRUE;
@@ -1137,10 +1026,9 @@ SerializedTypeKeyedPlugin_key_to_instance(
     SerializedTypeKeyed *dst, const
     SerializedTypeKeyedKeyHolder *src)
 {
-
     if (endpoint_data) {} /* To avoid warnings */   
     if (!RTICdrType_copyArray(
-        dst->key_hash ,src->key_hash,(16), RTI_CDR_OCTET_SIZE)) {
+        dst->key_hash ,src->key_hash,(KEY_HASH_LENGTH_16), RTI_CDR_OCTET_SIZE)) {
         return RTI_FALSE;
     }
     return RTI_TRUE;
@@ -1152,91 +1040,10 @@ SerializedTypeKeyedPlugin_instance_to_keyhash(
     DDS_KeyHash_t *keyhash,
     const SerializedTypeKeyed *instance)
 {
-    struct RTICdrStream * md5Stream = NULL;
-    struct RTICdrStreamState cdrState;
-    char * buffer = NULL;
+	if (endpoint_data) {} /* To avoid warnings */
 
-    RTICdrStreamState_init(&cdrState);
-    md5Stream = PRESTypePluginDefaultEndpointData_getMD5Stream(endpoint_data);
-
-    if (md5Stream == NULL) {
-        return RTI_FALSE;
-    }
-
-    RTICdrStream_resetPosition(md5Stream);
-    RTICdrStream_setDirtyBit(md5Stream, RTI_TRUE);
-
-    if (!SerializedTypeKeyedPlugin_serialize_key(
-        endpoint_data,
-        instance,
-        md5Stream, 
-        RTI_FALSE, 
-        RTI_CDR_ENCAPSULATION_ID_CDR_BE, 
-        RTI_TRUE,
-        NULL)) 
-    {
-        int size;
-
-        RTICdrStream_pushState(md5Stream, &cdrState, -1);
-
-        size = (int)SerializedTypeKeyedPlugin_get_serialized_sample_size(
-            endpoint_data,
-            RTI_FALSE,
-            RTI_CDR_ENCAPSULATION_ID_CDR_BE,
-            0,
-            instance);
-
-        if (size <= RTICdrStream_getBufferLength(md5Stream)) {
-            RTICdrStream_popState(md5Stream, &cdrState);        
-            return RTI_FALSE;
-        }   
-
-        RTIOsapiHeap_allocateBuffer(&buffer,size,0);
-
-        if (buffer == NULL) {
-            RTICdrStream_popState(md5Stream, &cdrState);
-            return RTI_FALSE;
-        }
-
-        RTICdrStream_set(md5Stream, buffer, size);
-        RTIOsapiMemory_zero(
-            RTICdrStream_getBuffer(md5Stream),
-            RTICdrStream_getBufferLength(md5Stream));
-        RTICdrStream_resetPosition(md5Stream);
-        RTICdrStream_setDirtyBit(md5Stream, RTI_TRUE);
-        if (!SerializedTypeKeyedPlugin_serialize_key(
-            endpoint_data,
-            instance,
-            md5Stream, 
-            RTI_FALSE, 
-            RTI_CDR_ENCAPSULATION_ID_CDR_BE, 
-            RTI_TRUE,
-            NULL)) 
-        {
-            RTICdrStream_popState(md5Stream, &cdrState);
-            RTIOsapiHeap_freeBuffer(buffer);
-            return RTI_FALSE;
-        }        
-    }   
-
-    if (PRESTypePluginDefaultEndpointData_getMaxSizeSerializedKey(endpoint_data) > 
-    (unsigned int)(MIG_RTPS_KEY_HASH_MAX_LENGTH) ||
-    PRESTypePluginDefaultEndpointData_forceMD5KeyHash(endpoint_data)) {
-        RTICdrStream_computeMD5(md5Stream, keyhash->value);
-    } else {
-        RTIOsapiMemory_zero(keyhash->value,MIG_RTPS_KEY_HASH_MAX_LENGTH);
-        RTIOsapiMemory_copy(
-            keyhash->value, 
-            RTICdrStream_getBuffer(md5Stream), 
-            RTICdrStream_getCurrentPositionOffset(md5Stream));
-    }
-
-    keyhash->length = MIG_RTPS_KEY_HASH_MAX_LENGTH;
-
-    if (buffer != NULL) {
-        RTICdrStream_popState(md5Stream, &cdrState);
-        RTIOsapiHeap_freeBuffer(buffer);
-    }
+	RTIOsapiMemory_copy(
+		keyhash->value, instance->key_hash, KEY_HASH_LENGTH_16);
 
     return RTI_TRUE;
 }
@@ -1249,60 +1056,10 @@ SerializedTypeKeyedPlugin_serialized_sample_to_keyhash(
     RTIBool deserialize_encapsulation,
     void *endpoint_plugin_qos) 
 {   
-    char * position = NULL;
-
-    RTIBool done = RTI_FALSE;
-    RTIBool error = RTI_FALSE;
-    SerializedTypeKeyed * sample=NULL;
-
-    if (endpoint_plugin_qos) {} /* To avoid warnings */
-    if (stream == NULL) {
-        error = RTI_TRUE;
-        goto fin;
-    }
-
-    if(deserialize_encapsulation) {
-        if (!RTICdrStream_deserializeAndSetCdrEncapsulation(stream)) {
-            return RTI_FALSE;
-        }
-
-        position = RTICdrStream_resetAlignment(stream);
-    }
-
-    sample = (SerializedTypeKeyed *)
-    PRESTypePluginDefaultEndpointData_getTempSample(endpoint_data);
-
-    if (sample == NULL) {
-        return RTI_FALSE;
-    }
-
-    if (!RTICdrStream_deserializePrimitiveArray(
-        stream, (void*) sample->key_hash, (16), RTI_CDR_OCTET_TYPE)) {
-        return RTI_FALSE;
-    }
-
-    done = RTI_TRUE;
-  fin:
-    if(!error) {
-        if (done != RTI_TRUE && 
-        RTICdrStream_getRemainder(stream) >=
-        RTI_CDR_PARAMETER_HEADER_ALIGNMENT) {
-            return RTI_FALSE;   
-        }
-    } else {
-        return RTI_FALSE;
-    } 
-
-    if(deserialize_encapsulation) {
-        RTICdrStream_restoreAlignment(stream,position);
-    }
-
-    if (!SerializedTypeKeyedPlugin_instance_to_keyhash(
-        endpoint_data, keyhash, sample)) {
-        return RTI_FALSE;
-    }
-
-    return RTI_TRUE;
+	/* TODO */
+	/* This would need to use DynamicData */
+ 
+    return RTI_FALSE;
 }
 
 /* ------------------------------------------------------------------------

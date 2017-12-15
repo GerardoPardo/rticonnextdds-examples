@@ -9,8 +9,8 @@ For more information, type 'rtiddsgen -help' at a command shell
 or consult the RTI Connext manual.
 */
 
-#ifndef SerializedTypeKeyedPlugin_1719073535_h
-#define SerializedTypeKeyedPlugin_1719073535_h
+#ifndef SerializedTypeKeyedPlugin_1719073588_h
+#define SerializedTypeKeyedPlugin_1719073588_h
 
 #include "SerializedTypeKeyed.h"
 
@@ -332,5 +332,5 @@ SerializedTypeKeyedPlugin_delete(struct PRESTypePlugin *);
 #define NDDSUSERDllExport
 #endif
 
-#endif /* SerializedTypeKeyedPlugin_1719073535_h */
+#endif /* SerializedTypeKeyedPlugin_1719073588_h */
 

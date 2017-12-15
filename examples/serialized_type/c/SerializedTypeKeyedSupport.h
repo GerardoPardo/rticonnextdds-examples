@@ -8,8 +8,8 @@ For more information, type 'rtiddsgen -help' at a command shell
 or consult the RTI Connext manual.
 */
 
-#ifndef SerializedTypeKeyedSupport_1719073535_h
-#define SerializedTypeKeyedSupport_1719073535_h
+#ifndef SerializedTypeKeyedSupport_1719073588_h
+#define SerializedTypeKeyedSupport_1719073588_h
 
 /* Uses */
 #include "SerializedTypeKeyed.h"
@@ -51,5 +51,5 @@ DDS_DATAREADER_C(SerializedTypeKeyedDataReader, SerializedTypeKeyedSeq, Serializ
 #define NDDSUSERDllExport
 #endif
 
-#endif  /* SerializedTypeKeyedSupport_1719073535_h */
+#endif  /* SerializedTypeKeyedSupport_1719073588_h */
 

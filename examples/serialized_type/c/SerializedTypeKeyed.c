@@ -28,11 +28,11 @@ or consult the RTI Connext manual.
 /* ========================================================================= */
 const char *SerializedTypeKeyedTYPENAME = "SerializedTypeKeyed";
 
-DDS_TypeCode* SerializedTypeKeyed_get_typecode()
+DDS_TypeCode* SerializedTypeKeyed_get_typecode() 
 {
     static RTIBool is_initialized = RTI_FALSE;
 
-    static DDS_TypeCode SerializedTypeKeyed_g_tc_key_hash_array =DDS_INITIALIZE_ARRAY_TYPECODE(1,16, NULL,NULL);
+    static DDS_TypeCode SerializedTypeKeyed_g_tc_key_hash_array =DDS_INITIALIZE_ARRAY_TYPECODE(1, KEY_HASH_LENGTH_16, NULL,NULL);
     static DDS_TypeCode SerializedTypeKeyed_g_tc_buffer_sequence = DDS_INITIALIZE_SEQUENCE_TYPECODE((100),NULL);
     static DDS_TypeCode_Member SerializedTypeKeyed_g_tc_members[2]=
     {
@@ -134,7 +134,7 @@ RTIBool SerializedTypeKeyed_initialize_w_params(
         return RTI_FALSE;
     }
 
-	memset(sample->key_hash, 0xFF, 16* RTI_CDR_OCTET_SIZE);
+	memset(sample->key_hash, 0xFF, KEY_HASH_LENGTH_16);
 	DDS_OctetSeq_initialize(&sample->buffer);
 
 	return RTI_TRUE;
@@ -191,7 +191,7 @@ RTIBool SerializedTypeKeyed_copy(
     }
 
 	// Copy key hash
-	memcpy(dst->key_hash, src->key_hash, (16 * RTI_CDR_OCTET_SIZE));
+	RTIOsapiMemory_copy(dst->key_hash, src->key_hash, KEY_HASH_LENGTH_16);
 
 	// Copy automatically resizes the destination sequence
 	return (DDS_OctetSeq_copy(&dst->buffer, &src->buffer) != NULL);
