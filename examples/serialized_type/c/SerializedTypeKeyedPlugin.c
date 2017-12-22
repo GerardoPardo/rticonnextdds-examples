@@ -9,6 +9,7 @@ or consult the RTI Connext manual.
 */
 
 #include <string.h>
+#include <stdio.h>
 
 #ifndef ndds_c_h
 #include "ndds/ndds_c.h"
@@ -52,6 +53,17 @@ or consult the RTI Connext manual.
 #define RTI_CDR_CURRENT_SUBMODULE RTI_CDR_SUBMODULE_MASK_STREAM
 
 #include "SerializedTypeKeyedPlugin.h"
+
+
+/* TODO
+   Note that:
+
+   EndpointInfo contains PRESTypePlugin *
+   PRESTypePlugin contains RTICdrTypeCode *
+
+   PRESTypePluginEndpointData is defined as PRESTypePluginDefaultEndpointData for the plugin
+   PRESTypePluginDefaultEndpointData contains PRESTypePluginEndpointInfo *
+*/
 
 /* ----------------------------------------------------------------------------
 *  Type SerializedTypeKeyed
@@ -141,6 +153,45 @@ SerializedTypeKeyedPluginSupport_copy_data(
     return SerializedTypeKeyed_copy(dst,(const SerializedTypeKeyed*) src);
 }
 
+/* This should be used to print formatted data */
+DDS_ReturnCode_t SerializedTypeKeyedTypeSupport_print_data2(
+	const SerializedTypeKeyed *sample,
+	FILE  *fp,
+	const char *desc,
+	unsigned int indent_level,
+	struct DDS_TypeCode *type_code)
+
+{
+	DDS_ReturnCode_t retCode;
+
+	if (fp == NULL) {
+		fp = stdout;
+	}
+
+	if (desc != NULL) {
+		fprintf(fp, "%s:\n", desc);
+	}
+
+	struct DDS_DynamicData *data = DDS_DynamicData_new(	type_code, &DDS_DYNAMIC_DATA_PROPERTY_DEFAULT);
+	if (data == NULL) {
+		return DDS_RETCODE_ERROR;
+	}
+
+	retCode = DDS_DynamicData_from_cdr_buffer(data, 
+		DDS_OctetSeq_get_contiguous_bufferI(&sample->buffer), 
+		DDS_OctetSeq_get_length(&sample->buffer));
+
+	if (retCode != DDS_RETCODE_OK) {
+		goto done;
+	}
+	retCode = DDS_DynamicDataFormatter_print(data, fp, indent_level);
+
+
+done:
+	DDS_DynamicData_delete(data);
+	return retCode;
+}
+
 void 
 SerializedTypeKeyedPluginSupport_print_data(
     const SerializedTypeKeyed *sample,
@@ -164,7 +215,13 @@ SerializedTypeKeyedPluginSupport_print_data(
         return;
     }
 
-	RTICdrType_printVariableSizedInteger(sample->key_hash, "key_hash", indent_level + 1, KEY_HASH_LENGTH_16);
+	RTICdrType_printPrimitivePreamble(&sample->buffer, "key_hash", indent_level + 1);
+	RTILog_debug("< ");
+	for (i = 0; i < KEY_HASH_LENGTH_16; ++i) {
+        RTILog_debug("%02x ", sample->key_hash[i]);
+    }
+	RTILog_debug(">\n");
+
 	RTICdrType_printPrimitivePreamble(&sample->buffer, "buffer", indent_level + 1);
 		
 	pByte     = DDS_OctetSeq_get_contiguous_bufferI(&sample->buffer);
@@ -397,19 +454,9 @@ SerializedTypeKeyedPlugin_serialize(
     }
 
     if(serialize_sample) {
-
-
 		// The sample->buffer contains the serialized data, so we only need to copy that into
-		// the CDR stream. Not the key_hash, nor the length of the data itself
+		// the CDR stream. Not the key_hash, not the length of the data itself
 		// The SerilizedType sample->buffer is always a contiguous buffer
-
-		/*
-		if (!RTICdrStream_serializePrimitiveArray(
-		stream, (void*) sample->key_hash, (KEY_HASH_LENGTH_16), RTI_CDR_OCTET_TYPE)) {
-		return RTI_FALSE;
-		}
-		*/
-
 		DDS_Octet *buffer = DDS_OctetSeq_get_contiguous_bufferI(&sample->buffer);
 		if ( buffer == NULL ) {
 			return RTI_FALSE;
@@ -431,13 +478,42 @@ SerializedTypeKeyedPlugin_serialize(
     return retval;
 }
 
+
+/**
+	TODO. The code-block below does not belong here.
+	It should be pushed to the CDR module, perhaps inside
+	RTICdrStream_deserializeAndSetCdrEncapsulation so that the
+	stream size is alredy correct when SerializedTypeKeyedPlugin_deserialize_sample
+	is called. 
+
+	Adjust the size of the CDR stream to not include the alignment
+	padding. See http://issues.omg.org/browse/DDSXTY12-10
+
+	@precondition The RTICdrStream *stream has alreadt processed
+	              the encapsulation header and therefore has set the
+				  encapsulation options returned by
+				  RTICdrStream_getEncapsulationOptions()
+*/
+void
+SerializedTypeKeyedPlugin_remove_padding_from_stream(struct RTICdrStream *stream)
+{
+	/* See http://issues.omg.org/browse/DDSXTY12-10 */
+	DDS_UnsignedShort padding_size_mask = 0x0003;
+	DDS_UnsignedShort padding_size;
+	int adjustedBufferLength;
+
+	padding_size = RTICdrStream_getEncapsulationOptions(stream) & padding_size_mask;
+	adjustedBufferLength = RTICdrStream_getBufferLength(stream) - padding_size;
+	RTICdrStream_setBufferLength(stream, adjustedBufferLength);
+}
+
 RTIBool 
 SerializedTypeKeyedPlugin_deserialize_sample(
     PRESTypePluginEndpointData endpoint_data,
     SerializedTypeKeyed *sample,
     struct RTICdrStream *stream,   
     RTIBool deserialize_encapsulation,
-    RTIBool deserialize_sample, 
+    RTIBool deserialize_sample,
     void *endpoint_plugin_qos)
 {
     char * position = NULL;
@@ -453,45 +529,28 @@ SerializedTypeKeyedPlugin_deserialize_sample(
 		}
 		position = RTICdrStream_resetAlignment(stream);
 
-		{
-			/* TODO. This does not belong here. It should be pushed to the CDR module to that the
-			   stream size is correct when this function is called. */
-			   /* Based on the encapsulation_options we can adjust the size of the CDR stream to remove
-				  the alignment padding. See http://issues.omg.org/browse/DDSXTY12-10 */
-			DDS_UnsignedShort padding_size_mask = 0x0003;
-			DDS_UnsignedShort padding_size;
-			int adjustedBufferLength;
-
-			padding_size = RTICdrStream_getEncapsulationOptions(stream) & padding_size_mask;
-			adjustedBufferLength = RTICdrStream_getBufferLength(stream) - padding_size;
-			RTICdrStream_setBufferLength(stream, adjustedBufferLength);
-			if (padding_size != 0) {
-				RTILog_debug("DEBUG: Adjusted Length to compensate for %d of padding\n", (int)padding_size);
-			}
-		}
-	}
-	else {
-		/* The deserialization of the data as a serialized block only works if we are deserialing everything 
-		   that remains in the CDR stream, therefore we require that deserialize_encapsulation == TRUE */
-		return RTI_FALSE;
+		/* TODO. The call does not belong here. It should be pushed 
+		   inside RTICdrStream_deserializeAndSetCdrEncapsulation */
+		SerializedTypeKeyedPlugin_remove_padding_from_stream(stream);
 	}
 
-    if(deserialize_sample) {
-		/* TODO: We should pass the SampleInfo / Meta-Data to the deserialization. Having the
-		KeyHash and publication_guid/handle can be very useful in deserialization.
-		In this case it would allow the Key to be re-created.
-		In the meantime we cannot set the key field correctly so we intialize to 0xFF
+    if (deserialize_sample) {
+		/* Note that sample->key_hash is set by SerializedTypeKeyedPlugin_deserialize()
+		   because SerializedTypeKeyedPlugin_deserialize_sample does not have access to 
+		   that information
 		*/
-		memset(sample->key_hash, 0xFF, KEY_HASH_LENGTH_16);
 
-		/* This only works if we are deserialing everything that remains in the CDR stream */
+		/* We copy everything that remains in the CDR stream */
 		int bytesLeftInStream = RTICdrStream_getRemainder(stream);
 		DDS_Octet *cdrBufferPtr  = RTICdrStream_getCurrentPosition(stream);
 		if (cdrBufferPtr == NULL) {
 			goto fin;
 		}
 
-		SerializedTypeKeyed_initialize_ex(sample, RTI_FALSE, RTI_FALSE);
+		/* Do not call SerializedTypeKeyed_initialize_ex initialize here 
+		   because it would override the key_hash field
+		   SerializedTypeKeyed_initialize_ex(sample, RTI_FALSE, RTI_FALSE); 
+		 */
 		if (!DDS_OctetSeq_from_array(&sample->buffer, cdrBufferPtr, bytesLeftInStream) ) {
 			goto fin;
 		}
@@ -511,6 +570,7 @@ SerializedTypeKeyedPlugin_deserialize_sample(
 
     return RTI_TRUE;
 }
+
 
 RTIBool
 SerializedTypeKeyedPlugin_serialize_to_cdr_buffer(
@@ -661,6 +721,22 @@ SerializedTypeKeyedPlugin_data_to_string(
     return DDS_RETCODE_OK;
 }
 
+
+/* 
+  TODO: This function should be added to CstReaderCollator and exposed in the header file
+
+  The sample parameter is pointing to  &( ((PRESCstReaderCollatorSample *)collatoreSample)->data)
+  so we can use it to get to the &(collatoreSample->keyHash)
+*/
+void
+PRESCstReaderCollator_copyKeyHash(DDS_Octet *outKeyHashPtr, SerializedTypeKeyed **sample) \
+{
+	size_t dataOffset = offsetof(struct PRESCstReaderCollatorSample, data);
+	struct PRESCstReaderCollatorSample *collatorSample = (struct PRESCstReaderCollatorSample *) ((char *)sample - dataOffset);
+
+	memcpy(outKeyHashPtr, &(collatorSample->keyHash.value), KEY_HASH_LENGTH_16);
+}
+
 RTIBool 
 SerializedTypeKeyedPlugin_deserialize(
     PRESTypePluginEndpointData endpoint_data,
@@ -674,6 +750,9 @@ SerializedTypeKeyedPlugin_deserialize(
 
     RTIBool result;
     const char *METHOD_NAME = "SerializedTypeKeyedPlugin_deserialize";
+
+	PRESCstReaderCollator_copyKeyHash((*sample)->key_hash, sample);
+
     if (drop_sample) {} /* To avoid warnings */
 
     stream->_xTypesState.unassignable = RTI_FALSE;
@@ -706,11 +785,9 @@ RTIBool SerializedTypeKeyedPlugin_skip(
     RTIBool skip_sample, 
     void *endpoint_plugin_qos)
 {
-	/* TODO */
-	/* This function can only be implemented if we are using XCDR version 2 and
-	   the type is either APPENDABLE or MUTABLE because those types are wrapped by
-	   a length.
-	   */
+	/* Advance to the end of the stream */
+	int bytesLeftInStream = RTICdrStream_getRemainder(stream);
+	RTICdrStream_incrementCurrentPosition(stream, bytesLeftInStream);
 
     return RTI_FALSE;
 }
@@ -1065,7 +1142,12 @@ SerializedTypeKeyedPlugin_serialized_sample_to_keyhash(
 /* ------------------------------------------------------------------------
 * Plug-in Installation Methods
 * ------------------------------------------------------------------------ */
-struct PRESTypePlugin *SerializedTypeKeyedPlugin_new(void) 
+struct PRESTypePlugin *SerializedTypeKeyedPlugin_new(void)
+{
+	return NULL;
+}
+
+struct PRESTypePlugin *SerializedTypeKeyedPlugin_new2( struct DDS_TypeCode *type_code ) 
 { 
     struct PRESTypePlugin *plugin = NULL;
     const struct PRESTypePluginVersion PLUGIN_VERSION = 
@@ -1162,7 +1244,7 @@ struct PRESTypePlugin *SerializedTypeKeyedPlugin_new(void)
     (PRESTypePluginKeyToInstanceFunction)
     SerializedTypeKeyedPlugin_key_to_instance;
     plugin->serializedKeyToKeyHashFnc = NULL; /* Not supported yet */
-    plugin->typeCode =  (struct RTICdrTypeCode *)SerializedTypeKeyed_get_typecode();
+	plugin->typeCode = (struct RTICdrTypeCode *)type_code;  /*  SerializedTypeKeyed_get_typecode(); */
 
     plugin->languageKind = PRES_TYPEPLUGIN_DDS_TYPE;
 

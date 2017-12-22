@@ -44,6 +44,24 @@ DDS_TYPESUPPORT_C(SerializedTypeKeyedTypeSupport, SerializedTypeKeyed);
 DDS_DATAWRITER_C(SerializedTypeKeyedDataWriter, SerializedTypeKeyed);
 DDS_DATAREADER_C(SerializedTypeKeyedDataReader, SerializedTypeKeyedSeq, SerializedTypeKeyed);
 
+NDDSUSERDllExport DDSCDllExport
+DDS_ReturnCode_t SerializedTypeKeyedTypeSupport_register_type2(
+	DDS_DomainParticipant* participant,
+	const char* type_name,
+	struct DDS_TypeCode *type_code);
+
+DDS_ReturnCode_t SerializedTypeKeyedTypeSupport_print_data2(
+	const SerializedTypeKeyed *sample,
+	FILE  *fp,
+	const char *desc,
+	unsigned int indent_level,
+	struct DDS_TypeCode *type_code);
+
+/* Special higher-level writers */
+struct SerializedTypeKeyedWriter {
+	DDS_DataWriter* _parent;
+};
+
 #if (defined(RTI_WIN32) || defined (RTI_WINCE)) && defined(NDDS_USER_DLL_EXPORT)
 /* If the code is building on Windows, stop exporting symbols.
 */

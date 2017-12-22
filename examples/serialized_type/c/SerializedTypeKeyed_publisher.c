@@ -7,6 +7,9 @@
 #include "SerializedTypeKeyed.h"
 #include "SerializedTypeKeyedSupport.h"
 
+#include "ShapeType.h"
+#include "ShapeTypePlugin.h"
+
 /* Delete all entities */
 static int publisher_shutdown(
     DDS_DomainParticipant *participant)
@@ -82,10 +85,10 @@ static int publisher_main(int domainId, int sample_count)
     }
 
     /* Register type before creating topic */
-    type_name = SerializedTypeKeyedTypeSupport_get_type_name();
-    retcode = SerializedTypeKeyedTypeSupport_register_type(
-        participant, type_name);
-    if (retcode != DDS_RETCODE_OK) {
+	retcode = SerializedTypeKeyedTypeSupport_register_type2(
+		participant, "ShapeType", ShapeType_get_typecode());
+
+	if (retcode != DDS_RETCODE_OK) {
         fprintf(stderr, "register_type error %d\n", retcode);
         publisher_shutdown(participant);
         return -1;
@@ -94,8 +97,8 @@ static int publisher_main(int domainId, int sample_count)
     /* To customize topic QoS, use 
     the configuration file USER_QOS_PROFILES.xml */
     topic = DDS_DomainParticipant_create_topic(
-        participant, "Example SerializedTypeKeyed",
-        type_name, &DDS_TOPIC_QOS_DEFAULT, NULL /* listener */,
+        participant, "Square",
+        "ShapeType", &DDS_TOPIC_QOS_DEFAULT, NULL /* listener */,
         DDS_STATUS_MASK_NONE);
     if (topic == NULL) {
         fprintf(stderr, "create_topic error\n");
@@ -136,25 +139,50 @@ static int publisher_main(int domainId, int sample_count)
         SerializedTypeKeyed_writer, instance);
     */
 
-    /* Main loop */
-	sequence_length = 34;
-	DDS_OctetSeq_ensure_length(&(instance->buffer), sequence_length, sequence_length);
+	ShapeType shapeType;
+	ShapeType_initialize(&shapeType);
 
-    for (count=0; (sample_count == 0) || (count < sample_count); ++count) {
+#define NUMBER_OF_COLORS (4)
+	char *colors[NUMBER_OF_COLORS] = { "GREEN", "RED", "BLUE", "YELLOW" };
+	int  xbase[NUMBER_OF_COLORS] = { 10, 50, 100, 150 };
+	int  ybase[NUMBER_OF_COLORS] = {  0,  0,  0,   0 };
 
-        printf("Writing SerializedTypeKeyed, count %d\n", count);
+	for (count = 0; (sample_count == 0) || (count < sample_count); ++count) {
 
-        /* Modify the data to be written here */
-        /* Write data */
-		instance->key_hash[0] = (char)count % 256;
-		DDS_Octet *elem = DDS_OctetSeq_get_reference(&(instance->buffer), count % sequence_length);
-		*elem = (DDS_Octet)(count % 256);
+		printf("Writing ShapeType, count %d\n", count);
+
+		/* Modify the data to be written here */
+		strcpy_s(shapeType.color, COLOR_LENGTH_MAX, colors[count % NUMBER_OF_COLORS]);
+		shapeType.x = xbase[count % NUMBER_OF_COLORS] + count % 250;
+		shapeType.y = ybase[count % NUMBER_OF_COLORS] + (2 * count) % 250;
+		shapeType.shapesize = 20 + count % 30;
+
+		/* Write data */
+#define SERIALIZATION_BUFFER_SIZE (1024)
+		// Use "int" so that it is aligned to a 4-byte boundary */
+		int serializationBuffer[(SERIALIZATION_BUFFER_SIZE+3)/4];
+		int serializationLength = SERIALIZATION_BUFFER_SIZE;
+
+		/* serializationLength on input it is the maximum size.
+		   on successful output it is the number of bytes used for the serialization */
+		ShapeTypePlugin_serialize_to_cdr_buffer((char *)&serializationBuffer, &serializationLength, &shapeType);
+
+		/* ShapeType_serialize_to_cdr_buffer() adds a 4-byte encapsulation header that must be removed */
+		/* Use DDS_OctetSeq_loan_contiguous() instead of DDS_OctetSeq_copy() to save one copy */
+		DDS_OctetSeq_loan_contiguous(&(instance->buffer), ((DDS_Octet *)serializationBuffer) + 4,
+			serializationLength - 4, SERIALIZATION_BUFFER_SIZE - 4);
+
+		/* TODO: Use ShapeType_serialize_key */ 
+		for (int i = 0; i < 16; ++i) {
+			instance->key_hash[i] = (char)((count+i) % 256);
+		}
 
         retcode = SerializedTypeKeyedDataWriter_write(
             SerializedTypeKeyed_writer, instance, &instance_handle);
         if (retcode != DDS_RETCODE_OK) {
             fprintf(stderr, "write error %d\n", retcode);
         }
+		DDS_OctetSeq_unloan(&(instance->buffer));
 
         NDDS_Utility_sleep(&send_period);
     }

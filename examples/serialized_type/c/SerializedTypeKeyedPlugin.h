@@ -1,5 +1,3 @@
-
-
 /*
 WARNING: THIS FILE IS AUTO-GENERATED. DO NOT MODIFY.
 
@@ -322,6 +320,10 @@ SerializedTypeKeyedPlugin_serialized_sample_to_keyhash(
 NDDSUSERDllExport extern struct PRESTypePlugin*
 SerializedTypeKeyedPlugin_new(void);
 
+NDDSUSERDllExport extern struct PRESTypePlugin*
+SerializedTypeKeyedPlugin_new2(struct DDS_TypeCode *type_code);
+
+
 NDDSUSERDllExport extern void
 SerializedTypeKeyedPlugin_delete(struct PRESTypePlugin *);
 
@@ -331,6 +333,85 @@ SerializedTypeKeyedPlugin_delete(struct PRESTypePlugin *);
 #undef NDDSUSERDllExport
 #define NDDSUSERDllExport
 #endif
+
+
+/* TODO this is needed in order to be able to navigate from
+   PRESCstReaderCollatorSample::data to PRESCstReaderCollatorSample::keyHash 
+   
+   Rather than copying the declaration here which is nt maintainable we should
+   expose the function to get to the keyHash from the data.
+
+   This structure is defined in CstReaderCollator.c
+*/
+#define PRES_READER_QUEUE_MAX_VIRTUAL_WRITERS_PER_SAMPLE (5)
+struct PRESCstReaderCollatorSampleVirtualWriterEntry {
+	struct PRESReaderQueueVirtualWriter * virtualWriter;
+	struct PRESCstReaderCollatorInstanceVirtualWriterEntry * instanceVirtualWriter;
+	struct REDASequenceNumber virtualSn;
+};
+
+struct PRESCstReaderCollatorSample {
+	struct REDAInlineListNode node;
+	struct PRESCstReaderCollatorEntry * entry; /* Entry containing the sample */
+	struct REDASequenceNumber vSn; /* Sample virtual sn */
+	struct REDASequenceNumber originalVirtualSn; /* Original virtual sn */
+	struct MIGRtpsGuid originalVirtualWriterGuid; /* Every sample from the same entry has the same virtual GUID */
+	void * data; /* Deserialize data or Deserialize key */
+	void * dataHandle;
+	RTIBool hasValidData;
+	RTIBool hasValidKey;
+	RTIBool invalidSample; /* It can be RTI_TRUE only for batch configurations */
+	struct RTINtpTime sourceTimestamp;
+	RTIBool hasSourceTimestamp;
+	int loanCount;
+	RTIBool isTaken;
+	/* The relatedOriginalVirtualWriterGuid and relatedOriginalVirtualSn
+	together form the sample identity of a related sample. Example
+	for related sample: In request reply use case when sending a reply sample
+	the associated request will be the related sample */
+	struct MIGRtpsGuid relatedOriginalVirtualWriterGuid;
+	struct REDASequenceNumber relatedOriginalVirtualSn;
+	/* A sample is considered processed by an application the first time a loan is returned */
+	RTIBool processedByApplication;
+	/* List of virtual writers that have tried to commit this sample */
+	/* We support up to 5 remote virtual writers */
+	/* If a sixth remote virtual writer try to commit the sample, it will be considered
+	as processed by the application for that remote writer */
+	int numberOfVirtualWriters;
+	struct PRESCstReaderCollatorSampleVirtualWriterEntry virtualWriters[PRES_READER_QUEUE_MAX_VIRTUAL_WRITERS_PER_SAMPLE];
+	PRESSampleStateKind sampleState;
+	/*
+	* This state is for content filters. It tells us whether the sample
+	* passed the filter, failed the filter or has not yet been evaluated*
+	* against the filter
+	*/
+	int filterState;
+
+	/*
+	* Used to keep track of whether a sample's queryConditionFilterState
+	* is valid for each of the query conditions. A filter state is not valid
+	* if the sample hasn't been evaluated against a query condition yet
+	*/
+	RTI_UINT32 queryConditionFilterStateValidity;
+
+	/*
+	* Used to keep track of whether a sample passed or failed each of the
+	* query conditions
+	*/
+	RTI_UINT32 queryConditionFilterState;
+	/* list of filters for which this sample meets filter criteria */
+	struct REDAInlineList matchedFilters;
+	RTI_UINT32 serializedDataLength;
+	char *serializedDataPosition;
+	struct MIGRtpsKeyHash keyHash;
+	PRESSampleFlag sampleFlag;
+	struct MIGRtpsGuid relatedReaderGuid;
+	struct MIGRtpsGuid relatedSourceGuid;
+	struct MIGRtpsGuid sourceGuid;
+
+	PRESSampleHash sampleHash;
+};
+
 
 #endif /* SerializedTypeKeyedPlugin_1719073588_h */
 

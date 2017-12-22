@@ -49,6 +49,23 @@ Defines:   TDataWriter, TData
 
 #undef TTYPENAME
 
+/* Extra functions */
+DDS_ReturnCode_t SerializedTypeKeyedDataWriter_write_raw(
+	SerializedTypeKeyedDataWriter* self,
+	const unsigned char  data_key_hash[16],
+	unsigned long        data_serialized_length,
+	const unsigned char* data_serialized)
+{
+	SerializedTypeKeyed instance_data;
+	SerializedTypeKeyed_initialize(&instance_data);
+	memcpy(instance_data.key_hash, data_key_hash, KEY_HASH_LENGTH_16);
+	DDS_OctetSeq_loan_contiguous(&instance_data.buffer, data_serialized,
+		data_serialized_length, data_serialized_length);
+
+	return SerializedTypeKeyedDataWriter_write(self, &instance_data, &DDS_HANDLE_NIL);
+}
+
+
 /* ----------------------------------------------------------------- */
 /* DDSDataReader
 */
@@ -111,3 +128,48 @@ Defines:   TTypeSupport, TData, TDataReader, TDataWriter
 #undef TPlugin_new
 #undef TPlugin_delete
 
+/* TODO 
+
+   The SerializedTypeKeyed needs to be registered passing the
+   TypeCode of the underlying type. That will ensure the right
+   type information is propagated on the wire.
+
+   Note that SerializedTypeKeyedTypeSupport_register_type() is defined by
+   the macros above. We can't avoid it the way the code is generated.
+   That function should not be called. Instead the application should
+   call TTypeSupport_register_type2()
+*/
+DDS_ReturnCode_t SerializedTypeKeyedTypeSupport_register_type2(
+	DDS_DomainParticipant* participant,
+	const char* type_name,
+	struct DDS_TypeCode *type_code)
+{
+	struct PRESTypePlugin *presTypePlugin = NULL;
+	DDS_ReturnCode_t retcode = DDS_RETCODE_ERROR;
+
+	if (participant == NULL) {
+		goto done;
+	}
+
+	/* TODO pass the type_code */
+	presTypePlugin = SerializedTypeKeyedPlugin_new2(type_code);
+	if (presTypePlugin == NULL) {
+		goto done;
+	}
+
+	retcode = DDS_DomainParticipant_register_type(
+		participant,
+		type_name,
+		presTypePlugin,
+		NULL /* registration_data */);
+	if (retcode != DDS_RETCODE_OK) {
+		goto done;
+	}
+
+done:
+	if (presTypePlugin != NULL) {
+		SerializedTypeKeyedPlugin_delete(presTypePlugin);
+	}
+
+	return retcode;
+}
