@@ -60,7 +60,6 @@ static int publisher_main(int domainId, int sample_count)
     const char *type_name = NULL;
     int count = 0;  
     struct DDS_Duration_t send_period = {4,0};
-	int sequence_length;
 
     /* To customize participant QoS, use 
     the configuration file USER_QOS_PROFILES.xml */
@@ -167,10 +166,10 @@ static int publisher_main(int domainId, int sample_count)
 		   on successful output it is the number of bytes used for the serialization */
 		ShapeTypePlugin_serialize_to_cdr_buffer((char *)&serializationBuffer, &serializationLength, &shapeType);
 
-		/* ShapeType_serialize_to_cdr_buffer() adds a 4-byte encapsulation header that must be removed */
+		/* ShapeType_serialize_to_cdr_buffer() adds the 4-byte encapsulation header */
 		/* Use DDS_OctetSeq_loan_contiguous() instead of DDS_OctetSeq_copy() to save one copy */
-		DDS_OctetSeq_loan_contiguous(&(instance->buffer), ((DDS_Octet *)serializationBuffer) + 4,
-			serializationLength - 4, SERIALIZATION_BUFFER_SIZE - 4);
+		DDS_OctetSeq_loan_contiguous(&(instance->buffer), ((DDS_Octet *)serializationBuffer),
+			serializationLength, SERIALIZATION_BUFFER_SIZE);
 
 		/* TODO: Use ShapeType_serialize_key */ 
 		for (int i = 0; i < 16; ++i) {

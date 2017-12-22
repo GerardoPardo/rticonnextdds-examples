@@ -90,7 +90,7 @@ void SerializedTypeKeyedListener_on_data_available(
 			SerializedTypeKeyedTypeSupport_print_data(serializedType);
 
 			/* Pretty print it using the TypeCode if available*/
-			SerializedTypeKeyedTypeSupport_print_data2(serializedType, stdout, NULL, 2, ShapeType_get_typecode());
+			SerializedTypeKeyedTypeSupport_print_data2(serializedType, stdout, "ShapeType:", 2, ShapeType_get_typecode());
         }		
     }
 

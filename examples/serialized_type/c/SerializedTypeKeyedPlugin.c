@@ -429,6 +429,20 @@ SerializedTypeKeyedPlugin_get_serialized_sample_max_size(
     RTIEncapsulationId encapsulation_id,
     unsigned int current_alignment);
 
+/**
+ * This plugin can only be used as a top-level type. 
+ * It expects the SerializedTypeKeyed to contain data serialized with its
+ * encapsulation header already there.
+ *
+ * @param serialize_encapsulation normally it indicates whether encapsulaton should be serialized
+ *    it also indicates whether we are serializing the data as a a top-level type (in the
+ *	  RTPSSerializedPayload or we are serializing as part of a nested type).
+      For SerializedTypeKeyedPlugin_serialize() it must be set to TRUE
+ *
+ * @param encapsulation_id the encapsulation identifier in case serialize_encapsulation==TRUE
+ *    the implementation of SerializedTypeKeyedPlugin_serialize checks that the value of
+ *    encapsulation_id matches the first two bytes in sample->buffer
+ */
 RTIBool 
 SerializedTypeKeyedPlugin_serialize(
     PRESTypePluginEndpointData endpoint_data,
@@ -445,20 +459,31 @@ SerializedTypeKeyedPlugin_serialize(
     if (endpoint_data) {} /* To avoid warnings */
     if (endpoint_plugin_qos) {} /* To avoid warnings */
 
-    if(serialize_encapsulation) {
-        if (!RTICdrStream_serializeAndSetCdrEncapsulation(stream , encapsulation_id)) {
-            return RTI_FALSE;
-        }
+	/* This plugin can only be used to publish the top-level DDS Topic-Type
+	 * in which case serialize_encapsulation==TRUE. If that is not
+	 * the case then it is an error.
+	 */
+	if (!serialize_encapsulation) {
+		return RTI_FALSE;
+	}
 
-        position = RTICdrStream_resetAlignment(stream);
-    }
+    position = RTICdrStream_resetAlignment(stream);
 
     if(serialize_sample) {
-		// The sample->buffer contains the serialized data, so we only need to copy that into
-		// the CDR stream. Not the key_hash, not the length of the data itself
-		// The SerilizedType sample->buffer is always a contiguous buffer
+		/* The sample->buffer contains the serialized encapsulation followed by the serialized
+		 * data, so we only need to copy that into
+		 * the CDR stream. Not the key_hash, not the length of the data itself
+		 * The SerializedType sample->buffer is always a contiguous buffer
+		 */
 		DDS_Octet *buffer = DDS_OctetSeq_get_contiguous_bufferI(&sample->buffer);
 		if ( buffer == NULL ) {
+			return RTI_FALSE;
+		}
+
+		/* The encapsulation_id appears in the sample->buffer as octet[2] using big-endian
+		 * byte order
+		 */
+		if ( encapsulation_id != (buffer[0] * 256 + buffer[1]) ) {
 			return RTI_FALSE;
 		}
 
@@ -471,9 +496,7 @@ SerializedTypeKeyedPlugin_serialize(
 		}
     }
 
-    if(serialize_encapsulation) {
-        RTICdrStream_restoreAlignment(stream,position);
-    }
+    RTICdrStream_restoreAlignment(stream ,position);
 
     return retval;
 }
@@ -507,7 +530,12 @@ SerializedTypeKeyedPlugin_remove_padding_from_stream(struct RTICdrStream *stream
 	RTICdrStream_setBufferLength(stream, adjustedBufferLength);
 }
 
-RTIBool 
+/**
+* This plugin can only be used as a top-level type.
+* It expects the RTICdrStream to contain the encapsulatio header
+* followed by the serialized data itself
+*/
+RTIBool
 SerializedTypeKeyedPlugin_deserialize_sample(
     PRESTypePluginEndpointData endpoint_data,
     SerializedTypeKeyed *sample,
@@ -522,22 +550,25 @@ SerializedTypeKeyedPlugin_deserialize_sample(
     if (endpoint_data) {} /* To avoid warnings */
     if (endpoint_plugin_qos) {} /* To avoid warnings */
    
-	if (deserialize_encapsulation) {
-
-		if (!RTICdrStream_deserializeAndSetCdrEncapsulation(stream)) {
-			return RTI_FALSE;
-		}
-		position = RTICdrStream_resetAlignment(stream);
-
-		/* TODO. The call does not belong here. It should be pushed 
-		   inside RTICdrStream_deserializeAndSetCdrEncapsulation */
-		SerializedTypeKeyedPlugin_remove_padding_from_stream(stream);
+	/* This plugin can only be used to publish the top-level DDS Topic-Type
+	 * in which case deserialize_encapsulation==TRUE. If that is not
+	 * the case then it is an error.
+	 */
+	if (!deserialize_encapsulation) {
+		return RTI_FALSE;
 	}
 
+	position = RTICdrStream_resetAlignment(stream);
+
+    /* TODO. The call does not belong here. It should be pushed 
+	 * inside RTICdrStream_deserializeAndSetCdrEncapsulation 
+	 */
+	SerializedTypeKeyedPlugin_remove_padding_from_stream(stream);
+
     if (deserialize_sample) {
-		/* Note that sample->key_hash is set by SerializedTypeKeyedPlugin_deserialize()
-		   because SerializedTypeKeyedPlugin_deserialize_sample does not have access to 
-		   that information
+		/* Note that sample->key_hash was already set by SerializedTypeKeyedPlugin_deserialize()
+		   it is done there because SerializedTypeKeyedPlugin_deserialize_sample does not 
+		   have access to the SampleInfo where that information is
 		*/
 
 		/* We copy everything that remains in the CDR stream */
@@ -564,13 +595,11 @@ SerializedTypeKeyedPlugin_deserialize_sample(
 		 (RTICdrStream_getRemainder(stream) >= RTI_CDR_PARAMETER_HEADER_ALIGNMENT) ) {
         return RTI_FALSE;   
     }
-    if (deserialize_encapsulation) {
-        RTICdrStream_restoreAlignment(stream,position);
-    }
+
+	RTICdrStream_restoreAlignment(stream,position);
 
     return RTI_TRUE;
 }
-
 
 RTIBool
 SerializedTypeKeyedPlugin_serialize_to_cdr_buffer(
@@ -760,7 +789,8 @@ SerializedTypeKeyedPlugin_deserialize(
         endpoint_data, (sample != NULL)?*sample:NULL,
         stream, deserialize_encapsulation, deserialize_sample, 
         endpoint_plugin_qos);
-    if (result) {
+ 
+	if (result) {
         if (stream->_xTypesState.unassignable) {
             result = RTI_FALSE;
         }
@@ -771,11 +801,9 @@ SerializedTypeKeyedPlugin_deserialize(
             METHOD_NAME, 
             &RTI_CDR_LOG_UNASSIGNABLE_SAMPLE_OF_TYPE_s, 
             "SerializedTypeKeyed");
-
     }
 
     return result;
-
 }
 
 RTIBool SerializedTypeKeyedPlugin_skip(
