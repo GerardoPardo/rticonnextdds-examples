@@ -41,19 +41,50 @@ struct RTICdrStream;
 */
 typedef  struct SerializedTypeKeyed SerializedTypeKeyedKeyHolder;
 
-#define SerializedTypeKeyedPlugin_get_sample PRESTypePluginDefaultEndpointData_getSample 
-#define SerializedTypeKeyedPlugin_get_buffer PRESTypePluginDefaultEndpointData_getBuffer 
-#define SerializedTypeKeyedPlugin_return_buffer PRESTypePluginDefaultEndpointData_returnBuffer 
+/* --------------------------------------------------------------------------------------
+   Support functions:
+ * -------------------------------------------------------------------------------------- */
 
-#define SerializedTypeKeyedPlugin_get_key PRESTypePluginDefaultEndpointData_getKey 
-#define SerializedTypeKeyedPlugin_return_key PRESTypePluginDefaultEndpointData_returnKey
+NDDSUSERDllExport extern  void *
+SerializedTypeKeyedPlugin_get_sample(
+	PRESTypePluginEndpointData endpointData,
+	void **handle /* out */);
 
-#define SerializedTypeKeyedPlugin_create_sample PRESTypePluginDefaultEndpointData_createSample 
-#define SerializedTypeKeyedPlugin_destroy_sample PRESTypePluginDefaultEndpointData_deleteSample 
+NDDSUSERDllExport extern  RTIBool
+SerializedTypeKeyedPlugin_get_buffer(
+	PRESTypePluginEndpointData endpointData,
+	struct REDABuffer *buffer,
+	RTIEncapsulationId encapsulationId,
+	const void * user_data);
+
+NDDSUSERDllExport extern  void
+SerializedTypeKeyedPlugin_return_buffer(
+	PRESTypePluginEndpointData endpointData,
+	struct REDABuffer *buffer,
+	RTIEncapsulationId encapsulationId);
+
+NDDSUSERDllExport extern  void *
+SerializedTypeKeyedPlugin_get_key(
+	PRESTypePluginEndpointData endpointData,
+	void **handle /* out */);
+
+NDDSUSERDllExport extern  void
+SerializedTypeKeyedPlugin_return_key(
+	PRESTypePluginEndpointData endpointData,
+	void *key, void *handle);
+
+NDDSUSERDllExport extern  void *
+SerializedTypeKeyedPlugin_create_sample(
+	PRESTypePluginEndpointData endpointData);
+
+NDDSUSERDllExport extern void
+SerializedTypeKeyedPlugin_destroy_sample(
+	PRESTypePluginEndpointData endpointData,
+	void *sample);
 
 /* --------------------------------------------------------------------------------------
-Support functions:
-* -------------------------------------------------------------------------------------- */
+   Support functions:
+ * -------------------------------------------------------------------------------------- */
 
 NDDSUSERDllExport extern SerializedTypeKeyed*
 SerializedTypeKeyedPluginSupport_create_data_w_params(
@@ -321,7 +352,7 @@ NDDSUSERDllExport extern struct PRESTypePlugin*
 SerializedTypeKeyedPlugin_new(void);
 
 NDDSUSERDllExport extern struct PRESTypePlugin*
-SerializedTypeKeyedPlugin_new2(struct DDS_TypeCode *type_code);
+SerializedTypeKeyedPlugin_new2(struct DDS_TypeCode *type_code, int serialized_key_max_size);
 
 
 NDDSUSERDllExport extern void

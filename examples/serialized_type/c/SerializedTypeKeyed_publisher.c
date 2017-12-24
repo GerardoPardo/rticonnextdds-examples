@@ -47,6 +47,7 @@ static int publisher_shutdown(
     return status;
 }
 
+
 static int publisher_main(int domainId, int sample_count)
 {
     DDS_DomainParticipant *participant = NULL;
@@ -59,7 +60,7 @@ static int publisher_main(int domainId, int sample_count)
     DDS_InstanceHandle_t instance_handle = DDS_HANDLE_NIL;
     const char *type_name = NULL;
     int count = 0;  
-    struct DDS_Duration_t send_period = {4,0};
+    struct DDS_Duration_t send_period = {1,0};
 
     /* To customize participant QoS, use 
     the configuration file USER_QOS_PROFILES.xml */
@@ -83,9 +84,18 @@ static int publisher_main(int domainId, int sample_count)
         return -1;
     }
 
-    /* Register type before creating topic */
+    /* When regiatering the Data-Type with DDS it is important to use
+	   the correct type code which corresponds to the serilized data-format
+	   otherwise the type would be seen as incompatible by others and tools
+	   like visualization will not work.
+
+	   Here since the serialized data corresponds to a ShapeType we
+	   use the ShapeType_get_typecode()
+	*/
 	retcode = SerializedTypeKeyedTypeSupport_register_type2(
-		participant, "ShapeType", ShapeType_get_typecode());
+		participant, "ShapeType",
+		ShapeType_get_typecode(),
+		ShapeTypePlugin_get_serialized_key_max_size(NULL, RTI_FALSE, 0, 0));
 
 	if (retcode != DDS_RETCODE_OK) {
         fprintf(stderr, "register_type error %d\n", retcode);
@@ -130,14 +140,10 @@ static int publisher_main(int domainId, int sample_count)
         return -1;
     }
 
-    /* For a data type that has a key, if the same instance is going to be
-    written multiple times, initialize the key here
-    and register the keyed instance prior to writing */
-    /*
-    instance_handle = SerializedTypeKeyedDataWriter_register_instance(
-        SerializedTypeKeyed_writer, instance);
-    */
 
+	/* We take advantage of the ShapeTypePlugin to serialize the data
+	 * At the application layer
+	 */
 	ShapeType shapeType;
 	ShapeType_initialize(&shapeType);
 
@@ -145,6 +151,19 @@ static int publisher_main(int domainId, int sample_count)
 	char *colors[NUMBER_OF_COLORS] = { "GREEN", "RED", "BLUE", "YELLOW" };
 	int  xbase[NUMBER_OF_COLORS] = { 10, 50, 100, 150 };
 	int  ybase[NUMBER_OF_COLORS] = {  0,  0,  0,   0 };
+
+	/* Memory area where to put the serialized (ShapeType) data */
+	int serializationLength;
+	int serializationBufferSize = ShapeTypePlugin_get_serialized_sample_max_size(NULL, RTI_TRUE, 0, 0);
+
+	/* RTI_CDR_MAX_SERIALIZED_SIZE indites the type is unbounded normally the application
+	   would have some knwledge of the size. Here we print an error in this situation */
+	if (serializationBufferSize == RTI_CDR_MAX_SERIALIZED_SIZE) {
+		fprintf(stderr, "Type is unbounded. Please enter buffer size manually here\n");
+		return publisher_shutdown(participant);
+	}
+
+	DDS_Octet *serializationBuffer = (DDS_Octet *)malloc(serializationBufferSize);
 
 	for (count = 0; (sample_count == 0) || (count < sample_count); ++count) {
 
@@ -156,32 +175,38 @@ static int publisher_main(int domainId, int sample_count)
 		shapeType.y = ybase[count % NUMBER_OF_COLORS] + (2 * count) % 250;
 		shapeType.shapesize = 20 + count % 30;
 
-		/* Write data */
-#define SERIALIZATION_BUFFER_SIZE (1024)
-		// Use "int" so that it is aligned to a 4-byte boundary */
-		int serializationBuffer[(SERIALIZATION_BUFFER_SIZE+3)/4];
-		int serializationLength = SERIALIZATION_BUFFER_SIZE;
+		/* Use ShapeTypePlugin to serialize into an application buffer.
+		   Serialization includes the 4-byte SerializationHeader.
 
-		/* serializationLength on input it is the maximum size.
-		   on successful output it is the number of bytes used for the serialization */
-		ShapeTypePlugin_serialize_to_cdr_buffer((char *)&serializationBuffer, &serializationLength, &shapeType);
-
-		/* ShapeType_serialize_to_cdr_buffer() adds the 4-byte encapsulation header */
-		/* Use DDS_OctetSeq_loan_contiguous() instead of DDS_OctetSeq_copy() to save one copy */
-		DDS_OctetSeq_loan_contiguous(&(instance->buffer), ((DDS_Octet *)serializationBuffer),
-			serializationLength, SERIALIZATION_BUFFER_SIZE);
-
-		/* TODO: Use ShapeType_serialize_key */ 
-		for (int i = 0; i < 16; ++i) {
-			instance->key_hash[i] = (char)((count+i) % 256);
+		   Note: serializationLength on input it is the maximum size.
+		         On successful output it is the number of bytes used for 
+				 the serialization 
+	    */
+		serializationLength = serializationBufferSize;
+		if (!ShapeTypePlugin_serialize_to_cdr_buffer(serializationBuffer, &serializationLength, &shapeType)) {
+			fprintf(stderr, "Serialization of ShapeType failed\n");
 		}
+		else {
+			/* At this point:
+			      serializationBuffer  - contains the serialized shapeType
+				  serializationLength  - contains the number of bytes in serializationBuffer used by the serialization 
+		     */
+			/* Use DDS_OctetSeq_loan_contiguous() instead of DDS_OctetSeq_copy() to save one copy */
+			DDS_OctetSeq_loan_contiguous(&(instance->buffer), serializationBuffer,
+				serializationLength, serializationBufferSize);
 
-        retcode = SerializedTypeKeyedDataWriter_write(
-            SerializedTypeKeyed_writer, instance, &instance_handle);
-        if (retcode != DDS_RETCODE_OK) {
-            fprintf(stderr, "write error %d\n", retcode);
-        }
-		DDS_OctetSeq_unloan(&(instance->buffer));
+			/* TODO: Use ShapeType_serialize_key */ 
+			for (int i = 0; i < 16; ++i) {
+				instance->key_hash[i] = (char)(count % NUMBER_OF_COLORS);
+			}
+
+			retcode = SerializedTypeKeyedDataWriter_write(
+				SerializedTypeKeyed_writer, instance, &instance_handle);
+			if (retcode != DDS_RETCODE_OK) {
+				fprintf(stderr, "write error %d\n", retcode);
+			}
+			DDS_OctetSeq_unloan(&(instance->buffer));
+		}
 
         NDDS_Utility_sleep(&send_period);
     }
@@ -200,7 +225,8 @@ static int publisher_main(int domainId, int sample_count)
         fprintf(stderr, "SerializedTypeKeyedTypeSupport_delete_data error %d\n", retcode);
     }
 
-    /* Cleanup and delete delete all entities */         
+    /* Cleanup and delete delete all entities */ 
+	free(serializationBuffer);
     return publisher_shutdown(participant);
 }
 

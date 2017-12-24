@@ -128,8 +128,7 @@ Defines:   TTypeSupport, TData, TDataReader, TDataWriter
 #undef TPlugin_new
 #undef TPlugin_delete
 
-/* TODO 
-
+/*  
    The SerializedTypeKeyed needs to be registered passing the
    TypeCode of the underlying type. That will ensure the right
    type information is propagated on the wire.
@@ -138,23 +137,33 @@ Defines:   TTypeSupport, TData, TDataReader, TDataWriter
    the macros above. We can't avoid it the way the code is generated.
    That function should not be called. Instead the application should
    call TTypeSupport_register_type2()
+
+   serialized_key_max_size should be set to 0 if the type is Unkeyed. Otherwise
+   it shoud be set to the maximum size of the serialized key of the
+   underlying type defined by the type_code paramameter.
+
+   TODO: Would be nice to redefine SerializedTypeKeyedTypeSupport_register_type()
+   to have the implementation below instead of having to add a new register_type2()
+   function. At least we could find a way to prevent register_type() from being
+   called...
 */
 DDS_ReturnCode_t SerializedTypeKeyedTypeSupport_register_type2(
 	DDS_DomainParticipant* participant,
 	const char* type_name,
-	struct DDS_TypeCode *type_code)
+	struct DDS_TypeCode *type_code,
+	int    serialized_key_max_size)
 {
 	struct PRESTypePlugin *presTypePlugin = NULL;
 	DDS_ReturnCode_t retcode = DDS_RETCODE_ERROR;
 
 	if (participant == NULL) {
-		goto done;
+		goto fin;
 	}
 
 	/* TODO pass the type_code */
-	presTypePlugin = SerializedTypeKeyedPlugin_new2(type_code);
+	presTypePlugin = SerializedTypeKeyedPlugin_new2(type_code, serialized_key_max_size);
 	if (presTypePlugin == NULL) {
-		goto done;
+		goto fin;
 	}
 
 	retcode = DDS_DomainParticipant_register_type(
@@ -163,10 +172,11 @@ DDS_ReturnCode_t SerializedTypeKeyedTypeSupport_register_type2(
 		presTypePlugin,
 		NULL /* registration_data */);
 	if (retcode != DDS_RETCODE_OK) {
-		goto done;
+		goto fin;
 	}
+	return DDS_RETCODE_OK;
 
-done:
+fin:
 	if (presTypePlugin != NULL) {
 		SerializedTypeKeyedPlugin_delete(presTypePlugin);
 	}
