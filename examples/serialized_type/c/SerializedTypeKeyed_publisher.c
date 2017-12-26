@@ -171,8 +171,8 @@ static int publisher_main(int domainId, int sample_count)
 
 		/* Modify the data to be written here */
 		strcpy_s(shapeType.color, COLOR_LENGTH_MAX, colors[count % NUMBER_OF_COLORS]);
-		shapeType.x = xbase[count % NUMBER_OF_COLORS] + count % 250;
-		shapeType.y = ybase[count % NUMBER_OF_COLORS] + (2 * count) % 250;
+		shapeType.x = (xbase[count % NUMBER_OF_COLORS] + count) % 250;
+		shapeType.y = (ybase[count % NUMBER_OF_COLORS] + 2*count) % 250;
 		shapeType.shapesize = 20 + count % 30;
 
 		/* Use ShapeTypePlugin to serialize into an application buffer.

@@ -87,10 +87,11 @@ void SerializedTypeKeyedListener_on_data_available(
 			SerializedTypeKeyed *serializedType = SerializedTypeKeyedSeq_get_reference(&data_seq, i);
 
 			/* Print information as a serialized buffer */
+			printf("\nSerializedTypeKeyedSeq (as bytes):");
 			SerializedTypeKeyedTypeSupport_print_data(serializedType);
 
 			/* Pretty print it using the TypeCode if available*/
-			SerializedTypeKeyedTypeSupport_print_data2(serializedType, stdout, "ShapeType:", 2, ShapeType_get_typecode());
+			SerializedTypeKeyedTypeSupport_print_data2(serializedType, stdout, "SerializedTypeKeyedSeq (as ShapeType)", 0, ShapeType_get_typecode());
         }		
     }
 

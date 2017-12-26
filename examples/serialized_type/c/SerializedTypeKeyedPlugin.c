@@ -61,6 +61,7 @@ struct SerializedTypeKeyedPluginEndpointData {
 };
 
 #define GET_DEFAULT_ENDPOINT_DATA(epd) ( ((struct SerializedTypeKeyedPluginEndpointData *)epd)->defaultEndpointData  )
+#define GET_TYPE_PLUGIN(epd) ( ((struct SerializedTypeKeyedPluginEndpointData *)epd)->typePlugin  )
 
 struct SerializedTypeKeyedPluginUserBuffer {
 	int serializedKeyMaxSize;
@@ -181,7 +182,11 @@ DDS_ReturnCode_t SerializedTypeKeyedTypeSupport_print_data2(
 	}
 
 	if (desc != NULL) {
+		fprintf(fp, "%*s", indent_level, "");
 		fprintf(fp, "%s:\n", desc);
+	}
+	else {
+		fprintf(fp, "\n");
 	}
 
 	struct DDS_DynamicData *data = DDS_DynamicData_new(	type_code, &DDS_DYNAMIC_DATA_PROPERTY_DEFAULT);
@@ -196,7 +201,7 @@ DDS_ReturnCode_t SerializedTypeKeyedTypeSupport_print_data2(
 	if (retCode != DDS_RETCODE_OK) {
 		goto done;
 	}
-	retCode = DDS_DynamicDataFormatter_print(data, fp, indent_level);
+	retCode = DDS_DynamicDataFormatter_print(data, fp, indent_level+1);
 
 
 done:
@@ -394,10 +399,10 @@ SerializedTypeKeyedPlugin_on_endpoint_attached(
 			endpoint_info,
 			(PRESTypePluginGetSerializedSampleMaxSizeFunction)
 			SerializedTypeKeyedPlugin_get_serialized_sample_max_size, 
-			customEndpointData->defaultEndpointData,
+			customEndpointData,
 			(PRESTypePluginGetSerializedSampleSizeFunction)
 			SerializedTypeKeyedPlugin_get_serialized_sample_size,
-			customEndpointData->defaultEndpointData) == RTI_FALSE) {
+			customEndpointData) == RTI_FALSE) {
 
 			goto errorReturn;
 		}
@@ -819,9 +824,11 @@ SerializedTypeKeyedPlugin_get_serialized_sample_max_size_ex(
     RTIEncapsulationId encapsulation_id,
     unsigned int current_alignment)
 {
-	/* TODO */
-	/* This would need to use DynamicData and the TypeCode */
-	return 1024;
+	struct PRESTypePlugin *typePlugin = GET_TYPE_PLUGIN(endpoint_data);
+
+	return DDS_TypeCode_get_type_serialized_max_size(
+		typePlugin->typeCode, include_encapsulation,
+		encapsulation_id, current_alignment);
 }
 
 unsigned int 
@@ -851,32 +858,11 @@ SerializedTypeKeyedPlugin_get_serialized_sample_min_size(
     RTIEncapsulationId encapsulation_id,
     unsigned int current_alignment)
 {
+	struct PRESTypePlugin *typePlugin = GET_TYPE_PLUGIN(endpoint_data);
 
-    unsigned int initial_alignment = current_alignment;
-
-    unsigned int encapsulation_size = current_alignment;
-
-    if (endpoint_data) {} /* To avoid warnings */ 
-
-    if (include_encapsulation) {
-
-        if (!RTICdrEncapsulation_validEncapsulationId(encapsulation_id)) {
-            return 1;
-        }
-        RTICdrStream_getEncapsulationSize(encapsulation_size);
-        encapsulation_size -= current_alignment;
-        current_alignment = 0;
-        initial_alignment = 0;
-    }
-
-	/* TODO */
-	/* Unclear what we can return here. May need to use the DynamicData */
-	current_alignment += 4;
-
-    if (include_encapsulation) {
-        current_alignment += encapsulation_size;
-    }
-    return  current_alignment - initial_alignment;
+	return DDS_TypeCode_get_type_serialized_min_size(
+		typePlugin->typeCode, include_encapsulation, encapsulation_id,
+		current_alignment, DDS_BOOLEAN_FALSE, DDS_BOOLEAN_FALSE);
 }
 
 /* Returns the size of the sample in its serialized form (in bytes).
@@ -912,10 +898,17 @@ Key Management functions:
 * -------------------------------------------------------------------------------------- */
 
 PRESTypePluginKeyKind 
-SerializedTypeKeyedPlugin_get_key_kind(void)
+SerializedTypeKeyedPlugin_get_key_kind_USER_KEY(void)
 {
     return PRES_TYPEPLUGIN_USER_KEY;
 }
+
+PRESTypePluginKeyKind
+SerializedTypeKeyedPlugin_get_key_kind_NO_KEY(void)
+{
+	return PRES_TYPEPLUGIN_NO_KEY;
+}
+
 
 RTIBool 
 SerializedTypeKeyedPlugin_serialize_key(
@@ -927,6 +920,7 @@ SerializedTypeKeyedPlugin_serialize_key(
     RTIBool serialize_key,
     void *endpoint_plugin_qos)
 {
+	/* TODO this is called when a sample is registered on the writer side */
     char * position = NULL;
 
     if (endpoint_data) {} /* To avoid warnings */
@@ -963,7 +957,7 @@ RTIBool SerializedTypeKeyedPlugin_deserialize_key_sample(
     RTIBool deserialize_key,
     void *endpoint_plugin_qos)
 {
-
+	/* TODO */
     char * position = NULL;
 
     if (endpoint_data) {} /* To avoid warnings */
@@ -1003,6 +997,7 @@ RTIBool SerializedTypeKeyedPlugin_deserialize_key(
     RTIBool deserialize_key,
     void *endpoint_plugin_qos)
 {
+	/* TODO */
     RTIBool result;
     if (drop_sample) {} /* To avoid warnings */
     stream->_xTypesState.unassignable = RTI_FALSE;
@@ -1038,18 +1033,11 @@ SerializedTypeKeyedPlugin_get_serialized_key_max_size(
     RTIEncapsulationId encapsulation_id,
     unsigned int current_alignment)
 {
-	unsigned int initial_alignment = current_alignment;
-	unsigned int encapsulation_size = current_alignment;
-
-	struct SerializedTypeKeyedPluginEndpointData *serializedTypePED = endpoint_data;
-	struct SerializedTypeKeyedPluginUserBuffer *pluginUserBuffer =
-		(struct SerializedTypeKeyedPluginUserBuffer *)(serializedTypePED->typePlugin->_userBuffer);
-
-	int serializedKeyMaxSize = pluginUserBuffer->serializedKeyMaxSize;
-	if (include_encapsulation) {
-		serializedKeyMaxSize += 4;
-	}
-	return serializedKeyMaxSize;
+	struct PRESTypePlugin *typePlugin = GET_TYPE_PLUGIN(endpoint_data);
+	
+	return DDS_TypeCode_get_type_serialized_key_max_size(
+			typePlugin->typeCode, include_encapsulation,
+			encapsulation_id, current_alignment);
 }
 
 RTIBool 
@@ -1072,6 +1060,7 @@ SerializedTypeKeyedPlugin_instance_to_key(
     SerializedTypeKeyedKeyHolder *dst, 
     const SerializedTypeKeyed *src)
 {
+	/* TODO */
     if (endpoint_data) {} /* To avoid warnings */   
 
     if (!RTICdrType_copyArray(
@@ -1087,6 +1076,7 @@ SerializedTypeKeyedPlugin_key_to_instance(
     SerializedTypeKeyed *dst, const
     SerializedTypeKeyedKeyHolder *src)
 {
+	/* TODO */
     if (endpoint_data) {} /* To avoid warnings */   
     if (!RTICdrType_copyArray(
         dst->key_hash ,src->key_hash,(KEY_HASH_LENGTH_16), RTI_CDR_OCTET_SIZE)) {
@@ -1205,6 +1195,7 @@ SerializedTypeKeyedPlugin_destroy_sample(
 /* ------------------------------------------------------------------------
 * Plug-in Installation Methods
 * ------------------------------------------------------------------------ */
+/* This function should not be used. Use SerializedTypeKeyedPlugin_new2() */
 struct PRESTypePlugin *SerializedTypeKeyedPlugin_new(void)
 {
 	return NULL;
@@ -1257,8 +1248,14 @@ struct PRESTypePlugin *SerializedTypeKeyedPlugin_new2( struct DDS_TypeCode *type
     plugin->returnSampleFnc = (PRESTypePluginReturnSampleFunction)
 		SerializedTypeKeyedPlugin_return_sample;
 
-    plugin->getKeyKindFnc =   (PRESTypePluginGetKeyKindFunction)
-		SerializedTypeKeyedPlugin_get_key_kind;
+	if ( (type_code != NULL) && DDS_TypeCode_is_type_keyed(type_code) ) {
+		plugin->getKeyKindFnc = (PRESTypePluginGetKeyKindFunction)
+			SerializedTypeKeyedPlugin_get_key_kind_USER_KEY;
+	}
+	else {
+		plugin->getKeyKindFnc = (PRESTypePluginGetKeyKindFunction)
+			SerializedTypeKeyedPlugin_get_key_kind_NO_KEY;
+	}
 
     plugin->getSerializedKeyMaxSizeFnc = (PRESTypePluginGetSerializedKeyMaxSizeFunction)
 		SerializedTypeKeyedPlugin_get_serialized_key_max_size;

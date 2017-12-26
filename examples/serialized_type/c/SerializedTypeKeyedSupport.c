@@ -157,13 +157,13 @@ DDS_ReturnCode_t SerializedTypeKeyedTypeSupport_register_type2(
 	DDS_ReturnCode_t retcode = DDS_RETCODE_ERROR;
 
 	if (participant == NULL) {
-		goto fin;
+		goto finError;
 	}
 
 	/* TODO pass the type_code */
 	presTypePlugin = SerializedTypeKeyedPlugin_new2(type_code, serialized_key_max_size);
 	if (presTypePlugin == NULL) {
-		goto fin;
+		goto finError;
 	}
 
 	retcode = DDS_DomainParticipant_register_type(
@@ -172,11 +172,11 @@ DDS_ReturnCode_t SerializedTypeKeyedTypeSupport_register_type2(
 		presTypePlugin,
 		NULL /* registration_data */);
 	if (retcode != DDS_RETCODE_OK) {
-		goto fin;
+		goto finError;
 	}
 	return DDS_RETCODE_OK;
 
-fin:
+finError:
 	if (presTypePlugin != NULL) {
 		SerializedTypeKeyedPlugin_delete(presTypePlugin);
 	}

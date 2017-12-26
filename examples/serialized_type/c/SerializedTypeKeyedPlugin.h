@@ -26,18 +26,7 @@ struct RTICdrStream;
 #endif
 
 /* The type used to store keys for instances of type struct
-* AnotherSimple.
-*
-* By default, this type is struct SerializedTypeKeyed
-* itself. However, if for some reason this choice is not practical for your
-* system (e.g. if sizeof(struct SerializedTypeKeyed)
-* is very large), you may redefine this typedef in terms of another type of
-* your choosing. HOWEVER, if you define the KeyHolder type to be something
-* other than struct AnotherSimple, the
-* following restriction applies: the key of struct
-* SerializedTypeKeyed must consist of a
-* single field of your redefined KeyHolder type and that field must be the
-* first field in struct SerializedTypeKeyed.
+* SerializedTypeKeyed.
 */
 typedef  struct SerializedTypeKeyed SerializedTypeKeyedKeyHolder;
 
