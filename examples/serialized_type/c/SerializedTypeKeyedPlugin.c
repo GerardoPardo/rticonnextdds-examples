@@ -50,6 +50,18 @@ or consult the RTI Connext manual.
 #include "pres/pres_typePlugin.h"
 #endif
 
+#include "dds_c/dds_c_typecode_impl.h"
+
+/* The following need to made public. They are defined in TypeCodeSupport.c */
+extern DDS_Boolean DDS_TypeCode_is_type_keyed(const DDS_TypeCode *type);
+
+extern unsigned int DDS_TypeCode_get_type_serialized_key_max_size(
+	DDS_TypeCode *type,
+	RTIBool include_encapsulation,
+	RTIEncapsulationId encapsulation_id,
+	unsigned int current_alignment);
+
+
 #define RTI_CDR_CURRENT_SUBMODULE RTI_CDR_SUBMODULE_MASK_STREAM
 
 #include "SerializedTypeKeyedPlugin.h"
@@ -62,6 +74,7 @@ struct SerializedTypeKeyedPluginEndpointData {
 
 #define GET_DEFAULT_ENDPOINT_DATA(epd) ( ((struct SerializedTypeKeyedPluginEndpointData *)epd)->defaultEndpointData  )
 #define GET_TYPE_PLUGIN(epd) ( ((struct SerializedTypeKeyedPluginEndpointData *)epd)->typePlugin  )
+#define GET_TYPE_CODE(epd) (  (struct DDS_TypeCode *)(GET_TYPE_PLUGIN(epd)->typeCode)  )
 
 struct SerializedTypeKeyedPluginUserBuffer {
 	int serializedKeyMaxSize;
@@ -195,8 +208,8 @@ DDS_ReturnCode_t SerializedTypeKeyedTypeSupport_print_data2(
 	}
 
 	retCode = DDS_DynamicData_from_cdr_buffer(data, 
-		DDS_OctetSeq_get_contiguous_bufferI(&sample->buffer), 
-		DDS_OctetSeq_get_length(&sample->buffer));
+		DDS_OctetSeq_get_contiguous_bufferI(&sample->serialized_data), 
+		DDS_OctetSeq_get_length(&sample->serialized_data));
 
 	if (retCode != DDS_RETCODE_OK) {
 		goto done;
@@ -209,13 +222,68 @@ done:
 	return retCode;
 }
 
+/*
+ * Returns the number of bytes written or -1 in case of an error.
+ */
+int
+SerializedTypePlugin_dumpBytes(const unsigned char *pByte, unsigned int length, int indent_level)
+{
+	unsigned int  i, row, col;
+	const unsigned int BYTES_PER_ROW = 16;
+
+	if (length == 0) {
+		RTILog_debug("<empty>\n");
+		return 0;
+	}
+	else if ( pByte == NULL )  {
+		return -1;
+	}
+
+	/* Otherwise print */
+#define AS_CHAR(x) (isprint(x)?(x):'.')
+
+	for (row = 0; ; ++row) {
+		i = row * BYTES_PER_ROW;
+		RTILog_debug("\n");
+		RTICdrType_printIndent(indent_level + 2);
+		RTILog_debug("%04x  ", i);
+
+		for (col = 0; col < BYTES_PER_ROW; ++col, ++i) {
+			if (i < length) {
+				RTILog_debug("%02x ", pByte[i]);
+			}
+			else {
+				RTILog_debug("   ");
+			}
+			if (col == (BYTES_PER_ROW / 2 - 1)) { RTILog_debug(" "); }
+		}
+
+		RTILog_debug("   ");
+		i = row * BYTES_PER_ROW;
+		for (col = 0, i = row * BYTES_PER_ROW; col < BYTES_PER_ROW; ++col, ++i) {
+			if (i >= length) {
+				break;
+			}
+			RTILog_debug("%c", AS_CHAR(pByte[i]));
+			if (col == (BYTES_PER_ROW / 2 - 1)) { RTILog_debug(" "); }
+		}
+		if (i >= length) {
+			break;
+		}
+	}
+	RTILog_debug("\n");
+
+	return i;
+}
+
+
 void 
 SerializedTypeKeyedPluginSupport_print_data(
     const SerializedTypeKeyed *sample,
     const char *desc,
     unsigned int indent_level)
 {
-	unsigned int  i, row, col;
+	unsigned int  i;
 	unsigned int  length;
 	unsigned char *pByte;
 
@@ -232,52 +300,22 @@ SerializedTypeKeyedPluginSupport_print_data(
         return;
     }
 
-	RTICdrType_printPrimitivePreamble(&sample->buffer, "key_hash", indent_level + 1);
+	RTICdrType_printPrimitivePreamble(&sample->key_hash, "key_hash", indent_level + 1);
 	RTILog_debug("< ");
 	for (i = 0; i < KEY_HASH_LENGTH_16; ++i) {
         RTILog_debug("%02x ", sample->key_hash[i]);
     }
 	RTILog_debug(">\n");
 
-	RTICdrType_printPrimitivePreamble(&sample->buffer, "buffer", indent_level + 1);
-		
-	pByte     = DDS_OctetSeq_get_contiguous_bufferI(&sample->buffer);
-	length = DDS_OctetSeq_get_length(&sample->buffer);
+	RTICdrType_printPrimitivePreamble(&sample->serialized_key, "serialized_key", indent_level + 1);
+	pByte = DDS_OctetSeq_get_contiguous_bufferI(&sample->serialized_key);
+	length = DDS_OctetSeq_get_length(&sample->serialized_key);
+	SerializedTypePlugin_dumpBytes(pByte, length, indent_level);
 
-#define AS_CHAR(x) (isprint(x)?(x):'.')
-
-#define BYTES_PER_ROW (16)
-
-	for (row = 0; ; ++row) {
-		i = row * BYTES_PER_ROW;
-		RTILog_debug("\n");
-		RTICdrType_printIndent(indent_level + 2);
-		RTILog_debug("%04x  ", i);
-
-		for (col = 0; col < BYTES_PER_ROW; ++col, ++i) {
-			if (i < length) {
-				RTILog_debug("%02x ", pByte[i]);
-			}
-			else {
-				RTILog_debug("   ");
-			}
-			if (col == (BYTES_PER_ROW/2 -1) ) { RTILog_debug(" "); }
-		}
-
-		RTILog_debug("   ");
-		i = row * BYTES_PER_ROW;
-		for (col = 0, i = row * BYTES_PER_ROW; col < BYTES_PER_ROW; ++col, ++i) {
-			if (i >= length) {
-				break;
-			}
-			RTILog_debug("%c", AS_CHAR(pByte[i]) );
-			if (col == (BYTES_PER_ROW / 2 - 1)) { RTILog_debug(" "); }
-		}
-		if (i >= length) {
-			break;
-		}
-	}
-	RTILog_debug("\n");
+	RTICdrType_printPrimitivePreamble(&sample->serialized_data, "serialized_data", indent_level + 1);
+	pByte     = DDS_OctetSeq_get_contiguous_bufferI(&sample->serialized_data);
+	length = DDS_OctetSeq_get_length(&sample->serialized_data);
+	SerializedTypePlugin_dumpBytes(pByte, length, indent_level);
 }
 
 SerializedTypeKeyed *
@@ -473,7 +511,7 @@ SerializedTypeKeyedPlugin_get_serialized_sample_max_size(
  *
  * @param encapsulation_id the encapsulation identifier in case serialize_encapsulation==TRUE
  *    the implementation of SerializedTypeKeyedPlugin_serialize checks that the value of
- *    encapsulation_id matches the first two bytes in sample->buffer
+ *    encapsulation_id matches the first two bytes in sample->key_hash
  */
 RTIBool 
 SerializedTypeKeyedPlugin_serialize(
@@ -502,17 +540,17 @@ SerializedTypeKeyedPlugin_serialize(
     position = RTICdrStream_resetAlignment(stream);
 
     if(serialize_sample) {
-		/* The sample->buffer contains the serialized encapsulation followed by the serialized
+		/* The sample->serialized_data contains the serialized encapsulation followed by the serialized
 		 * data, so we only need to copy that into
 		 * the CDR stream. Not the key_hash, not the length of the data itself
-		 * The SerializedType sample->buffer is always a contiguous buffer
+		 * The SerializedType sample->serialized_data is always a contiguous buffer
 		 */
-		DDS_Octet *buffer = DDS_OctetSeq_get_contiguous_bufferI(&sample->buffer);
+		DDS_Octet *buffer = DDS_OctetSeq_get_contiguous_bufferI(&sample->serialized_data);
 		if ( buffer == NULL ) {
 			return RTI_FALSE;
 		}
 
-		/* The encapsulation_id appears in the sample->buffer as octet[2] using big-endian
+		/* The encapsulation_id appears in the sample->serialized_data as octet[2] using big-endian
 		 * byte order
 		 */
 		if ( encapsulation_id != (buffer[0] * 256 + buffer[1]) ) {
@@ -522,7 +560,7 @@ SerializedTypeKeyedPlugin_serialize(
 		/* Use RTICdrStream_serializePrimitiveArray so that there is no additional length prepended */
 		if (!RTICdrStream_serializePrimitiveArray(
 				stream, (void*)buffer,
-			DDS_OctetSeq_get_length(&sample->buffer),
+			DDS_OctetSeq_get_length(&sample->serialized_data),
 			RTI_CDR_OCTET_TYPE)) {
 			return RTI_FALSE;
 		}
@@ -603,6 +641,9 @@ SerializedTypeKeyedPlugin_deserialize_sample(
 		   have access to the SampleInfo where that information is
 		*/
 
+		/* We do not set the serialized_key on deserialization */
+		DDS_OctetSeq_set_length(&sample->serialized_key, 0);
+
 		/* We copy everything that remains in the CDR stream */
 		int bytesLeftInStream = RTICdrStream_getRemainder(stream);
 		DDS_Octet *cdrBufferPtr  = RTICdrStream_getCurrentPosition(stream);
@@ -614,7 +655,7 @@ SerializedTypeKeyedPlugin_deserialize_sample(
 		   because it would override the key_hash field
 		   SerializedTypeKeyed_initialize_ex(sample, RTI_FALSE, RTI_FALSE); 
 		 */
-		if (!DDS_OctetSeq_from_array(&sample->buffer, cdrBufferPtr, bytesLeftInStream) ) {
+		if (!DDS_OctetSeq_from_array(&sample->serialized_data, cdrBufferPtr, bytesLeftInStream) ) {
 			goto fin;
 		}
 		RTICdrStream_incrementCurrentPosition(stream, bytesLeftInStream);
@@ -824,10 +865,9 @@ SerializedTypeKeyedPlugin_get_serialized_sample_max_size_ex(
     RTIEncapsulationId encapsulation_id,
     unsigned int current_alignment)
 {
-	struct PRESTypePlugin *typePlugin = GET_TYPE_PLUGIN(endpoint_data);
-
 	return DDS_TypeCode_get_type_serialized_max_size(
-		typePlugin->typeCode, include_encapsulation,
+		GET_TYPE_CODE(endpoint_data),
+	    include_encapsulation,
 		encapsulation_id, current_alignment);
 }
 
@@ -858,10 +898,9 @@ SerializedTypeKeyedPlugin_get_serialized_sample_min_size(
     RTIEncapsulationId encapsulation_id,
     unsigned int current_alignment)
 {
-	struct PRESTypePlugin *typePlugin = GET_TYPE_PLUGIN(endpoint_data);
-
 	return DDS_TypeCode_get_type_serialized_min_size(
-		typePlugin->typeCode, include_encapsulation, encapsulation_id,
+		GET_TYPE_CODE(endpoint_data),
+		include_encapsulation, encapsulation_id,
 		current_alignment, DDS_BOOLEAN_FALSE, DDS_BOOLEAN_FALSE);
 }
 
@@ -889,8 +928,8 @@ SerializedTypeKeyedPlugin_get_serialized_sample_size(
 		RTICdrStream_getEncapsulationSize(encapsulation_size);
 	}
 
-	/* The length of teh serialized data is what is kept in the unerlying sequence */
-	return  encapsulation_size + DDS_OctetSeq_get_length(&sample->buffer);
+	/* The length of the serialized data is what is kept in the unerlying sequence */
+	return  encapsulation_size + DDS_OctetSeq_get_length(&sample->serialized_data);
 }
 
 /* --------------------------------------------------------------------------------------
@@ -909,6 +948,25 @@ SerializedTypeKeyedPlugin_get_key_kind_NO_KEY(void)
 	return PRES_TYPEPLUGIN_NO_KEY;
 }
 
+RTIBool 
+SerializedTypeKeyedPlugin_serialize_key_to_cdr_buffer(
+	char * buffer,
+	unsigned int *length,
+	const void *typed_sample, /* This should point to a sample of the type expected by serializeKeyFcn */
+	PRESTypePluginSerializeKeyFunction serializeKeyFnc )
+{
+	RTIBool returnValue;
+	struct RTICdrStream stream;
+	RTICdrStream_init(&stream);
+	RTICdrStream_set(&stream, (char *)buffer, *length);
+
+	returnValue = serializeKeyFnc(NULL, typed_sample, &stream, RTI_FALSE, RTI_CDR_ENCAPSULATION_ID_CDR_BE, RTI_TRUE, NULL);
+	if (returnValue) {
+		*length = RTICdrStream_getCurrentPositionOffset(&stream);
+	}
+
+	return returnValue;
+}
 
 RTIBool 
 SerializedTypeKeyedPlugin_serialize_key(
@@ -1032,11 +1090,10 @@ SerializedTypeKeyedPlugin_get_serialized_key_max_size(
     RTIBool include_encapsulation,
     RTIEncapsulationId encapsulation_id,
     unsigned int current_alignment)
-{
-	struct PRESTypePlugin *typePlugin = GET_TYPE_PLUGIN(endpoint_data);
-	
+{	
 	return DDS_TypeCode_get_type_serialized_key_max_size(
-			typePlugin->typeCode, include_encapsulation,
+		    GET_TYPE_CODE(endpoint_data),
+		    include_encapsulation,
 			encapsulation_id, current_alignment);
 }
 

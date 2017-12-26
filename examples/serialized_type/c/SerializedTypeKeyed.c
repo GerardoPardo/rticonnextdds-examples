@@ -30,78 +30,99 @@ const char *SerializedTypeKeyedTYPENAME = "SerializedTypeKeyed";
 
 DDS_TypeCode* SerializedTypeKeyed_get_typecode() 
 {
-    static RTIBool is_initialized = RTI_FALSE;
+	static RTIBool is_initialized = RTI_FALSE;
 
-    static DDS_TypeCode SerializedTypeKeyed_g_tc_key_hash_array =DDS_INITIALIZE_ARRAY_TYPECODE(1, KEY_HASH_LENGTH_16, NULL,NULL);
-    static DDS_TypeCode SerializedTypeKeyed_g_tc_buffer_sequence = DDS_INITIALIZE_SEQUENCE_TYPECODE((100),NULL);
-    static DDS_TypeCode_Member SerializedTypeKeyed_g_tc_members[2]=
-    {
+	static DDS_TypeCode SerializedTypeKeyed_g_tc_key_hash_array = DDS_INITIALIZE_ARRAY_TYPECODE(1, (KEY_HASH_LENGTH_16), NULL, NULL);
+	static DDS_TypeCode SerializedTypeKeyed_g_tc_serialized_key_sequence = DDS_INITIALIZE_SEQUENCE_TYPECODE((100), NULL);
+	static DDS_TypeCode SerializedTypeKeyed_g_tc_serialized_data_sequence = DDS_INITIALIZE_SEQUENCE_TYPECODE((100), NULL);
+	static DDS_TypeCode_Member SerializedTypeKeyed_g_tc_members[3] =
+	{
 
-        {
-            (char *)"key_hash",/* Member name */
-            {
-                0,/* Representation ID */          
-                DDS_BOOLEAN_FALSE,/* Is a pointer? */
-                -1, /* Bitfield bits */
-                NULL/* Member type code is assigned later */
-            },
-            0, /* Ignored */
-            0, /* Ignored */
-            0, /* Ignored */
-            NULL, /* Ignored */
-            RTI_CDR_KEY_MEMBER , /* Is a key? */
-            DDS_PUBLIC_MEMBER,/* Member visibility */
-            1,
-            NULL/* Ignored */
-        }, 
-        {
-            (char *)"buffer",/* Member name */
-            {
-                1,/* Representation ID */          
-                DDS_BOOLEAN_FALSE,/* Is a pointer? */
-                -1, /* Bitfield bits */
-                NULL/* Member type code is assigned later */
-            },
-            0, /* Ignored */
-            0, /* Ignored */
-            0, /* Ignored */
-            NULL, /* Ignored */
-            RTI_CDR_REQUIRED_MEMBER, /* Is a key? */
-            DDS_PUBLIC_MEMBER,/* Member visibility */
-            1,
-            NULL/* Ignored */
-        }
-    };
+		{
+			(char *)"key_hash",/* Member name */
+			{
+				0,/* Representation ID */
+				DDS_BOOLEAN_FALSE,/* Is a pointer? */
+				-1, /* Bitfield bits */
+				NULL/* Member type code is assigned later */
+			},
+		0, /* Ignored */
+		0, /* Ignored */
+		0, /* Ignored */
+		NULL, /* Ignored */
+		RTI_CDR_KEY_MEMBER , /* Is a key? */
+		DDS_PUBLIC_MEMBER,/* Member visibility */
+		1,
+		NULL/* Ignored */
+		},
+		{
+			(char *)"serialized_key",/* Member name */
+			{
+				1,/* Representation ID */
+				DDS_BOOLEAN_FALSE,/* Is a pointer? */
+				-1, /* Bitfield bits */
+				NULL/* Member type code is assigned later */
+			},
+		0, /* Ignored */
+		0, /* Ignored */
+		0, /* Ignored */
+		NULL, /* Ignored */
+		RTI_CDR_REQUIRED_MEMBER, /* Is a key? */
+		DDS_PUBLIC_MEMBER,/* Member visibility */
+		1,
+		NULL/* Ignored */
+		},
+		{
+			(char *)"serialized_data",/* Member name */
+			{
+				2,/* Representation ID */
+				DDS_BOOLEAN_FALSE,/* Is a pointer? */
+				-1, /* Bitfield bits */
+				NULL/* Member type code is assigned later */
+			},
+		0, /* Ignored */
+		0, /* Ignored */
+		0, /* Ignored */
+		NULL, /* Ignored */
+		RTI_CDR_REQUIRED_MEMBER, /* Is a key? */
+		DDS_PUBLIC_MEMBER,/* Member visibility */
+		1,
+		NULL/* Ignored */
+		}
+	};
 
-    static DDS_TypeCode SerializedTypeKeyed_g_tc =
-    {{
-            DDS_TK_STRUCT,/* Kind */
-            DDS_BOOLEAN_FALSE, /* Ignored */
-            -1, /*Ignored*/
-            (char *)"SerializedTypeKeyed", /* Name */
-            NULL, /* Ignored */      
-            0, /* Ignored */
-            0, /* Ignored */
-            NULL, /* Ignored */
-            2, /* Number of members */
-            SerializedTypeKeyed_g_tc_members, /* Members */
-            DDS_VM_NONE  /* Ignored */         
-        }}; /* Type code for SerializedTypeKeyed*/
+	static DDS_TypeCode SerializedTypeKeyed_g_tc =
+	{ {
+			DDS_TK_STRUCT,/* Kind */
+			DDS_BOOLEAN_FALSE, /* Ignored */
+			-1, /*Ignored*/
+			(char *)"SerializedTypeKeyed", /* Name */
+			NULL, /* Ignored */
+			0, /* Ignored */
+			0, /* Ignored */
+			NULL, /* Ignored */
+			3, /* Number of members */
+			SerializedTypeKeyed_g_tc_members, /* Members */
+			DDS_VM_NONE  /* Ignored */
+		} }; /* Type code for SerializedTypeKeyed*/
 
-    if (is_initialized) {
-        return &SerializedTypeKeyed_g_tc;
-    }
+	if (is_initialized) {
+		return &SerializedTypeKeyed_g_tc;
+	}
 
-    SerializedTypeKeyed_g_tc_key_hash_array._data._typeCode =(RTICdrTypeCode *)&DDS_g_tc_octet;
+	SerializedTypeKeyed_g_tc_key_hash_array._data._typeCode = (RTICdrTypeCode *)&DDS_g_tc_octet;
 
-    SerializedTypeKeyed_g_tc_buffer_sequence._data._typeCode = (RTICdrTypeCode *)&DDS_g_tc_octet;
+	SerializedTypeKeyed_g_tc_serialized_key_sequence._data._typeCode = (RTICdrTypeCode *)&DDS_g_tc_octet;
 
-    SerializedTypeKeyed_g_tc_members[0]._representation._typeCode = (RTICdrTypeCode *)& SerializedTypeKeyed_g_tc_key_hash_array;
-    SerializedTypeKeyed_g_tc_members[1]._representation._typeCode = (RTICdrTypeCode *)& SerializedTypeKeyed_g_tc_buffer_sequence;
+	SerializedTypeKeyed_g_tc_serialized_data_sequence._data._typeCode = (RTICdrTypeCode *)&DDS_g_tc_octet;
 
-    is_initialized = RTI_TRUE;
+	SerializedTypeKeyed_g_tc_members[0]._representation._typeCode = (RTICdrTypeCode *)& SerializedTypeKeyed_g_tc_key_hash_array;
+	SerializedTypeKeyed_g_tc_members[1]._representation._typeCode = (RTICdrTypeCode *)& SerializedTypeKeyed_g_tc_serialized_key_sequence;
+	SerializedTypeKeyed_g_tc_members[2]._representation._typeCode = (RTICdrTypeCode *)& SerializedTypeKeyed_g_tc_serialized_data_sequence;
 
-    return &SerializedTypeKeyed_g_tc;
+	is_initialized = RTI_TRUE;
+
+	return &SerializedTypeKeyed_g_tc;
 }
 
 RTIBool SerializedTypeKeyed_initialize(
@@ -135,7 +156,8 @@ RTIBool SerializedTypeKeyed_initialize_w_params(
     }
 
 	memset(sample->key_hash, 0xFF, KEY_HASH_LENGTH_16);
-	DDS_OctetSeq_initialize(&sample->buffer);
+	DDS_OctetSeq_initialize(&sample->serialized_key);
+	DDS_OctetSeq_initialize(&sample->serialized_data);
 
 	return RTI_TRUE;
 }
@@ -173,7 +195,8 @@ void SerializedTypeKeyed_finalize_w_params(
         return;
     }
 
-    DDS_OctetSeq_finalize(&sample->buffer);
+	DDS_OctetSeq_finalize(&sample->serialized_key);
+	DDS_OctetSeq_finalize(&sample->serialized_data);
 }
 
 void SerializedTypeKeyed_finalize_optional_members(
@@ -194,7 +217,13 @@ RTIBool SerializedTypeKeyed_copy(
 	RTIOsapiMemory_copy(dst->key_hash, src->key_hash, KEY_HASH_LENGTH_16);
 
 	// Copy automatically resizes the destination sequence
-	return (DDS_OctetSeq_copy(&dst->buffer, &src->buffer) != NULL);
+	if (!DDS_OctetSeq_copy(&dst->serialized_key, &src->serialized_key)) {
+		return RTI_FALSE;
+	}
+	if (!DDS_OctetSeq_copy(&dst->serialized_data, &src->serialized_data)) {
+		return RTI_FALSE;
+	}
+	return RTI_TRUE;
 }
 
 /**

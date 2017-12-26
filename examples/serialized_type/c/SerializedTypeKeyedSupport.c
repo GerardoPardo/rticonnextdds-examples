@@ -59,7 +59,7 @@ DDS_ReturnCode_t SerializedTypeKeyedDataWriter_write_raw(
 	SerializedTypeKeyed instance_data;
 	SerializedTypeKeyed_initialize(&instance_data);
 	memcpy(instance_data.key_hash, data_key_hash, KEY_HASH_LENGTH_16);
-	DDS_OctetSeq_loan_contiguous(&instance_data.buffer, data_serialized,
+	DDS_OctetSeq_loan_contiguous(&instance_data.serialized_data, data_serialized,
 		data_serialized_length, data_serialized_length);
 
 	return SerializedTypeKeyedDataWriter_write(self, &instance_data, &DDS_HANDLE_NIL);

@@ -192,7 +192,7 @@ static int publisher_main(int domainId, int sample_count)
 				  serializationLength  - contains the number of bytes in serializationBuffer used by the serialization 
 		     */
 			/* Use DDS_OctetSeq_loan_contiguous() instead of DDS_OctetSeq_copy() to save one copy */
-			DDS_OctetSeq_loan_contiguous(&(instance->buffer), serializationBuffer,
+			DDS_OctetSeq_loan_contiguous(&(instance->serialized_data), serializationBuffer,
 				serializationLength, serializationBufferSize);
 
 			/* TODO: Use ShapeType_serialize_key */ 
@@ -205,7 +205,7 @@ static int publisher_main(int domainId, int sample_count)
 			if (retcode != DDS_RETCODE_OK) {
 				fprintf(stderr, "write error %d\n", retcode);
 			}
-			DDS_OctetSeq_unloan(&(instance->buffer));
+			DDS_OctetSeq_unloan(&(instance->serialized_data));
 		}
 
         NDDS_Utility_sleep(&send_period);

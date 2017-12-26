@@ -27,7 +27,8 @@ extern const char *SerializedTypeKeyedTYPENAME;
 typedef struct SerializedTypeKeyed {
 
     DDS_Octet   key_hash [(KEY_HASH_LENGTH_16)];
-    struct    DDS_OctetSeq  buffer ;
+	struct      DDS_OctetSeq  serialized_key;
+	struct      DDS_OctetSeq  serialized_data;
 
 } SerializedTypeKeyed ;
 #if (defined(RTI_WIN32) || defined (RTI_WINCE)) && defined(NDDS_USER_DLL_EXPORT)
