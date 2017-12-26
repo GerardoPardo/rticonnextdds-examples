@@ -4,8 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "ndds/ndds_c.h"
-#include "SerializedTypeKeyed.h"
-#include "SerializedTypeKeyedSupport.h"
+#include "SerializedType.h"
+#include "SerializedTypeSupport.h"
 
 #include "ShapeType.h"
 #include "ShapeTypePlugin.h"
@@ -54,8 +54,8 @@ static int publisher_main(int domainId, int sample_count)
     DDS_Publisher *publisher = NULL;
     DDS_Topic *topic = NULL;
     DDS_DataWriter *writer = NULL;
-    SerializedTypeKeyedDataWriter *SerializedTypeKeyed_writer = NULL;
-    SerializedTypeKeyed *instance = NULL;
+    SerializedTypeDataWriter *SerializedType_writer = NULL;
+    SerializedType *instance = NULL;
     DDS_ReturnCode_t retcode;
     DDS_InstanceHandle_t instance_handle = DDS_HANDLE_NIL;
     const char *type_name = NULL;
@@ -92,7 +92,7 @@ static int publisher_main(int domainId, int sample_count)
 	   Here since the serialized data corresponds to a ShapeType we
 	   use the ShapeType_get_typecode()
 	*/
-	retcode = SerializedTypeKeyedTypeSupport_register_type2(
+	retcode = SerializedTypeTypeSupport_register_type2(
 		participant, "ShapeType",
 		ShapeType_get_typecode(),
 		ShapeTypePlugin_get_serialized_key_max_size(NULL, RTI_FALSE, 0, 0));
@@ -125,17 +125,17 @@ static int publisher_main(int domainId, int sample_count)
         publisher_shutdown(participant);
         return -1;
     }
-    SerializedTypeKeyed_writer = SerializedTypeKeyedDataWriter_narrow(writer);
-    if (SerializedTypeKeyed_writer == NULL) {
+    SerializedType_writer = SerializedTypeDataWriter_narrow(writer);
+    if (SerializedType_writer == NULL) {
         fprintf(stderr, "DataWriter narrow error\n");
         publisher_shutdown(participant);
         return -1;
     }
 
     /* Create data sample for writing */
-    instance = SerializedTypeKeyedTypeSupport_create_data_ex(DDS_BOOLEAN_TRUE);
+    instance = SerializedTypeTypeSupport_create_data_ex(DDS_BOOLEAN_TRUE);
     if (instance == NULL) {
-        fprintf(stderr, "SerializedTypeKeyedTypeSupport_create_data error\n");
+        fprintf(stderr, "SerializedTypeTypeSupport_create_data error\n");
         publisher_shutdown(participant);
         return -1;
     }
@@ -200,8 +200,8 @@ static int publisher_main(int domainId, int sample_count)
 				instance->key_hash[i] = (char)(count % NUMBER_OF_COLORS);
 			}
 
-			retcode = SerializedTypeKeyedDataWriter_write(
-				SerializedTypeKeyed_writer, instance, &instance_handle);
+			retcode = SerializedTypeDataWriter_write(
+				SerializedType_writer, instance, &instance_handle);
 			if (retcode != DDS_RETCODE_OK) {
 				fprintf(stderr, "write error %d\n", retcode);
 			}
@@ -212,17 +212,17 @@ static int publisher_main(int domainId, int sample_count)
     }
 
     /*
-    retcode = SerializedTypeKeyedDataWriter_unregister_instance(
-        SerializedTypeKeyed_writer, instance, &instance_handle);
+    retcode = SerializedTypeDataWriter_unregister_instance(
+        SerializedType_writer, instance, &instance_handle);
     if (retcode != DDS_RETCODE_OK) {
         fprintf(stderr, "unregister instance error %d\n", retcode);
     }
     */
 
     /* Delete data sample */
-    retcode = SerializedTypeKeyedTypeSupport_delete_data_ex(instance, DDS_BOOLEAN_TRUE);
+    retcode = SerializedTypeTypeSupport_delete_data_ex(instance, DDS_BOOLEAN_TRUE);
     if (retcode != DDS_RETCODE_OK) {
-        fprintf(stderr, "SerializedTypeKeyedTypeSupport_delete_data error %d\n", retcode);
+        fprintf(stderr, "SerializedTypeTypeSupport_delete_data error %d\n", retcode);
     }
 
     /* Cleanup and delete delete all entities */ 

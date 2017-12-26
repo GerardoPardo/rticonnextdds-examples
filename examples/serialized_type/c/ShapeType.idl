@@ -1,0 +1,12 @@
+/*  This file was automatically generated.
+     Modify the type definition to fit your needs
+*/
+const long COLOR_LENGTH_MAX = 32;
+
+struct ShapeType {
+	@key string<COLOR_LENGTH_MAX> color;
+
+    long x; 
+	long y;
+	long shapesize;
+};

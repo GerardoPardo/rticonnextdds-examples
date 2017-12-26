@@ -3,14 +3,14 @@
 /*
 WARNING: THIS FILE IS AUTO-GENERATED. DO NOT MODIFY.
 
-This file was generated from SerializedTypeKeyed.idl using "rtiddsgen".
+This file was generated from SerializedType.idl using "rtiddsgen".
 The rtiddsgen tool is part of the RTI Connext distribution.
 For more information, type 'rtiddsgen -help' at a command shell
 or consult the RTI Connext manual.
 */
 
-#ifndef SerializedTypeKeyed_1719073588_h
-#define SerializedTypeKeyed_1719073588_h
+#ifndef SerializedType_1719073588_h
+#define SerializedType_1719073588_h
 
 #ifndef NDDS_STANDALONE_TYPE
 #ifndef ndds_c_h
@@ -22,15 +22,15 @@ or consult the RTI Connext manual.
 
 #define KEY_HASH_LENGTH_16 (16)
 
-extern const char *SerializedTypeKeyedTYPENAME;
+extern const char *SerializedTypeTYPENAME;
 
-typedef struct SerializedTypeKeyed {
+typedef struct SerializedType {
 
     DDS_Octet   key_hash [(KEY_HASH_LENGTH_16)];
 	struct      DDS_OctetSeq  serialized_key;
 	struct      DDS_OctetSeq  serialized_data;
 
-} SerializedTypeKeyed ;
+} SerializedType ;
 #if (defined(RTI_WIN32) || defined (RTI_WINCE)) && defined(NDDS_USER_DLL_EXPORT)
 /* If the code is building on Windows, start exporting symbols.
 */
@@ -38,44 +38,44 @@ typedef struct SerializedTypeKeyed {
 #define NDDSUSERDllExport __declspec(dllexport)
 #endif
 
-NDDSUSERDllExport DDS_TypeCode* SerializedTypeKeyed_get_typecode(void); /* Type code */
+NDDSUSERDllExport DDS_TypeCode* SerializedType_get_typecode(void); /* Type code */
 
-DDS_SEQUENCE(SerializedTypeKeyedSeq, SerializedTypeKeyed);
-
-NDDSUSERDllExport
-RTIBool SerializedTypeKeyed_initialize(
-    SerializedTypeKeyed* self);
+DDS_SEQUENCE(SerializedTypeSeq, SerializedType);
 
 NDDSUSERDllExport
-RTIBool SerializedTypeKeyed_initialize_ex(
-    SerializedTypeKeyed* self,RTIBool allocatePointers,RTIBool allocateMemory);
+RTIBool SerializedType_initialize(
+    SerializedType* self);
 
 NDDSUSERDllExport
-RTIBool SerializedTypeKeyed_initialize_w_params(
-    SerializedTypeKeyed* self,
+RTIBool SerializedType_initialize_ex(
+    SerializedType* self,RTIBool allocatePointers,RTIBool allocateMemory);
+
+NDDSUSERDllExport
+RTIBool SerializedType_initialize_w_params(
+    SerializedType* self,
     const struct DDS_TypeAllocationParams_t * allocParams);  
 
 NDDSUSERDllExport
-void SerializedTypeKeyed_finalize(
-    SerializedTypeKeyed* self);
+void SerializedType_finalize(
+    SerializedType* self);
 
 NDDSUSERDllExport
-void SerializedTypeKeyed_finalize_ex(
-    SerializedTypeKeyed* self,RTIBool deletePointers);
+void SerializedType_finalize_ex(
+    SerializedType* self,RTIBool deletePointers);
 
 NDDSUSERDllExport
-void SerializedTypeKeyed_finalize_w_params(
-    SerializedTypeKeyed* self,
+void SerializedType_finalize_w_params(
+    SerializedType* self,
     const struct DDS_TypeDeallocationParams_t * deallocParams);
 
 NDDSUSERDllExport
-void SerializedTypeKeyed_finalize_optional_members(
-    SerializedTypeKeyed* self, RTIBool deletePointers);  
+void SerializedType_finalize_optional_members(
+    SerializedType* self, RTIBool deletePointers);  
 
 NDDSUSERDllExport
-RTIBool SerializedTypeKeyed_copy(
-    SerializedTypeKeyed* dst,
-    const SerializedTypeKeyed* src);
+RTIBool SerializedType_copy(
+    SerializedType* dst,
+    const SerializedType* src);
 
 #if (defined(RTI_WIN32) || defined (RTI_WINCE)) && defined(NDDS_USER_DLL_EXPORT)
 /* If the code is building on Windows, stop exporting symbols.
@@ -84,5 +84,5 @@ RTIBool SerializedTypeKeyed_copy(
 #define NDDSUSERDllExport
 #endif
 
-#endif /* SerializedTypeKeyed */
+#endif /* SerializedType */
 

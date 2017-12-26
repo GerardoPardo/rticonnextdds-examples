@@ -5,73 +5,73 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "ndds/ndds_c.h"
-#include "SerializedTypeKeyed.h"
-#include "SerializedTypeKeyedSupport.h"
+#include "SerializedType.h"
+#include "SerializedTypeSupport.h"
 
 #include "ShapeType.h"
 
-void SerializedTypeKeyedListener_on_requested_deadline_missed(
+void SerializedTypeListener_on_requested_deadline_missed(
     void* listener_data,
     DDS_DataReader* reader,
     const struct DDS_RequestedDeadlineMissedStatus *status)
 {
 }
 
-void SerializedTypeKeyedListener_on_requested_incompatible_qos(
+void SerializedTypeListener_on_requested_incompatible_qos(
     void* listener_data,
     DDS_DataReader* reader,
     const struct DDS_RequestedIncompatibleQosStatus *status)
 {
 }
 
-void SerializedTypeKeyedListener_on_sample_rejected(
+void SerializedTypeListener_on_sample_rejected(
     void* listener_data,
     DDS_DataReader* reader,
     const struct DDS_SampleRejectedStatus *status)
 {
 }
 
-void SerializedTypeKeyedListener_on_liveliness_changed(
+void SerializedTypeListener_on_liveliness_changed(
     void* listener_data,
     DDS_DataReader* reader,
     const struct DDS_LivelinessChangedStatus *status)
 {
 }
 
-void SerializedTypeKeyedListener_on_sample_lost(
+void SerializedTypeListener_on_sample_lost(
     void* listener_data,
     DDS_DataReader* reader,
     const struct DDS_SampleLostStatus *status)
 {
 }
 
-void SerializedTypeKeyedListener_on_subscription_matched(
+void SerializedTypeListener_on_subscription_matched(
     void* listener_data,
     DDS_DataReader* reader,
     const struct DDS_SubscriptionMatchedStatus *status)
 {
 }
 
-void SerializedTypeKeyedListener_on_data_available(
+void SerializedTypeListener_on_data_available(
     void* listener_data,
     DDS_DataReader* reader)
 {
-    SerializedTypeKeyedDataReader *SerializedTypeKeyed_reader = NULL;
-    struct SerializedTypeKeyedSeq data_seq = DDS_SEQUENCE_INITIALIZER;
+    SerializedTypeDataReader *SerializedType_reader = NULL;
+    struct SerializedTypeSeq data_seq = DDS_SEQUENCE_INITIALIZER;
     struct DDS_SampleInfoSeq info_seq = DDS_SEQUENCE_INITIALIZER;
 	struct DDS_SampleInfo    *sample_info;
 
     DDS_ReturnCode_t retcode;
     int i;
 
-    SerializedTypeKeyed_reader = SerializedTypeKeyedDataReader_narrow(reader);
-    if (SerializedTypeKeyed_reader == NULL) {
+    SerializedType_reader = SerializedTypeDataReader_narrow(reader);
+    if (SerializedType_reader == NULL) {
         fprintf(stderr, "DataReader narrow error\n");
         return;
     }
 
-    retcode = SerializedTypeKeyedDataReader_take(
-        SerializedTypeKeyed_reader,
+    retcode = SerializedTypeDataReader_take(
+        SerializedType_reader,
         &data_seq, &info_seq, DDS_LENGTH_UNLIMITED,
         DDS_ANY_SAMPLE_STATE, DDS_ANY_VIEW_STATE, DDS_ANY_INSTANCE_STATE);
     if (retcode == DDS_RETCODE_NO_DATA) {
@@ -81,22 +81,22 @@ void SerializedTypeKeyedListener_on_data_available(
         return;
     }
 
-    for (i = 0; i < SerializedTypeKeyedSeq_get_length(&data_seq); ++i) {
+    for (i = 0; i < SerializedTypeSeq_get_length(&data_seq); ++i) {
 		sample_info = DDS_SampleInfoSeq_get_reference(&info_seq, i);
         if (sample_info->valid_data) {
-			SerializedTypeKeyed *serializedType = SerializedTypeKeyedSeq_get_reference(&data_seq, i);
+			SerializedType *serializedType = SerializedTypeSeq_get_reference(&data_seq, i);
 
 			/* Print information as a serialized buffer */
-			printf("\nSerializedTypeKeyedSeq (as bytes):");
-			SerializedTypeKeyedTypeSupport_print_data(serializedType);
+			printf("\nSerializedTypeSeq (as bytes):");
+			SerializedTypeTypeSupport_print_data(serializedType);
 
 			/* Pretty print it using the TypeCode if available*/
-			SerializedTypeKeyedTypeSupport_print_data2(serializedType, stdout, "SerializedTypeKeyedSeq (as ShapeType)", 0, ShapeType_get_typecode());
+			SerializedTypeTypeSupport_print_data2(serializedType, stdout, "SerializedTypeSeq (as ShapeType)", 0, ShapeType_get_typecode());
         }		
     }
 
-    retcode = SerializedTypeKeyedDataReader_return_loan(
-        SerializedTypeKeyed_reader,
+    retcode = SerializedTypeDataReader_return_loan(
+        SerializedType_reader,
         &data_seq, &info_seq);
     if (retcode != DDS_RETCODE_OK) {
         fprintf(stderr, "return loan error %d\n", retcode);
@@ -176,7 +176,7 @@ static int subscriber_main(int domainId, int sample_count)
     }
 
     /* Register the type before creating the topic */
-	retcode = SerializedTypeKeyedTypeSupport_register_type2(
+	retcode = SerializedTypeTypeSupport_register_type2(
 		participant, "ShapeType", 
 		ShapeType_get_typecode());
 
@@ -200,19 +200,19 @@ static int subscriber_main(int domainId, int sample_count)
 
     /* Set up a data reader listener */
     reader_listener.on_requested_deadline_missed  =
-    SerializedTypeKeyedListener_on_requested_deadline_missed;
+    SerializedTypeListener_on_requested_deadline_missed;
     reader_listener.on_requested_incompatible_qos =
-    SerializedTypeKeyedListener_on_requested_incompatible_qos;
+    SerializedTypeListener_on_requested_incompatible_qos;
     reader_listener.on_sample_rejected =
-    SerializedTypeKeyedListener_on_sample_rejected;
+    SerializedTypeListener_on_sample_rejected;
     reader_listener.on_liveliness_changed =
-    SerializedTypeKeyedListener_on_liveliness_changed;
+    SerializedTypeListener_on_liveliness_changed;
     reader_listener.on_sample_lost =
-    SerializedTypeKeyedListener_on_sample_lost;
+    SerializedTypeListener_on_sample_lost;
     reader_listener.on_subscription_matched =
-    SerializedTypeKeyedListener_on_subscription_matched;
+    SerializedTypeListener_on_subscription_matched;
     reader_listener.on_data_available =
-    SerializedTypeKeyedListener_on_data_available;
+    SerializedTypeListener_on_data_available;
 
     /* To customize data reader QoS, use 
     the configuration file USER_QOS_PROFILES.xml */
@@ -227,7 +227,7 @@ static int subscriber_main(int domainId, int sample_count)
 
     /* Main loop */
     for (count=0; (sample_count == 0) || (count < sample_count); ++count) {
-        printf("SerializedTypeKeyed subscriber sleeping for %d sec...\n",
+        printf("SerializedType subscriber sleeping for %d sec...\n",
         poll_period.sec);
 
         NDDS_Utility_sleep(&poll_period);

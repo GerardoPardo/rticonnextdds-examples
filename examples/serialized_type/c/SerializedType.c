@@ -1,7 +1,7 @@
 /*
 WARNING: THIS FILE IS AUTO-GENERATED. DO NOT MODIFY.
 
-This file was generated from SerializedTypeKeyed.idl using "rtiddsgen".
+This file was generated from SerializedType.idl using "rtiddsgen".
 The rtiddsgen tool is part of the RTI Connext distribution.
 For more information, type 'rtiddsgen -help' at a command shell
 or consult the RTI Connext manual.
@@ -23,19 +23,19 @@ or consult the RTI Connext manual.
 #include "ndds_standalone_type.h"
 #endif
 
-#include "SerializedTypeKeyed.h"
+#include "SerializedType.h"
 
 /* ========================================================================= */
-const char *SerializedTypeKeyedTYPENAME = "SerializedTypeKeyed";
+const char *SerializedTypeTYPENAME = "SerializedType";
 
-DDS_TypeCode* SerializedTypeKeyed_get_typecode() 
+DDS_TypeCode* SerializedType_get_typecode() 
 {
 	static RTIBool is_initialized = RTI_FALSE;
 
-	static DDS_TypeCode SerializedTypeKeyed_g_tc_key_hash_array = DDS_INITIALIZE_ARRAY_TYPECODE(1, (KEY_HASH_LENGTH_16), NULL, NULL);
-	static DDS_TypeCode SerializedTypeKeyed_g_tc_serialized_key_sequence = DDS_INITIALIZE_SEQUENCE_TYPECODE((100), NULL);
-	static DDS_TypeCode SerializedTypeKeyed_g_tc_serialized_data_sequence = DDS_INITIALIZE_SEQUENCE_TYPECODE((100), NULL);
-	static DDS_TypeCode_Member SerializedTypeKeyed_g_tc_members[3] =
+	static DDS_TypeCode SerializedType_g_tc_key_hash_array = DDS_INITIALIZE_ARRAY_TYPECODE(1, (KEY_HASH_LENGTH_16), NULL, NULL);
+	static DDS_TypeCode SerializedType_g_tc_serialized_key_sequence = DDS_INITIALIZE_SEQUENCE_TYPECODE((100), NULL);
+	static DDS_TypeCode SerializedType_g_tc_serialized_data_sequence = DDS_INITIALIZE_SEQUENCE_TYPECODE((100), NULL);
+	static DDS_TypeCode_Member SerializedType_g_tc_members[3] =
 	{
 
 		{
@@ -91,47 +91,47 @@ DDS_TypeCode* SerializedTypeKeyed_get_typecode()
 		}
 	};
 
-	static DDS_TypeCode SerializedTypeKeyed_g_tc =
+	static DDS_TypeCode SerializedType_g_tc =
 	{ {
 			DDS_TK_STRUCT,/* Kind */
 			DDS_BOOLEAN_FALSE, /* Ignored */
 			-1, /*Ignored*/
-			(char *)"SerializedTypeKeyed", /* Name */
+			(char *)"SerializedType", /* Name */
 			NULL, /* Ignored */
 			0, /* Ignored */
 			0, /* Ignored */
 			NULL, /* Ignored */
 			3, /* Number of members */
-			SerializedTypeKeyed_g_tc_members, /* Members */
+			SerializedType_g_tc_members, /* Members */
 			DDS_VM_NONE  /* Ignored */
-		} }; /* Type code for SerializedTypeKeyed*/
+		} }; /* Type code for SerializedType*/
 
 	if (is_initialized) {
-		return &SerializedTypeKeyed_g_tc;
+		return &SerializedType_g_tc;
 	}
 
-	SerializedTypeKeyed_g_tc_key_hash_array._data._typeCode = (RTICdrTypeCode *)&DDS_g_tc_octet;
+	SerializedType_g_tc_key_hash_array._data._typeCode = (RTICdrTypeCode *)&DDS_g_tc_octet;
 
-	SerializedTypeKeyed_g_tc_serialized_key_sequence._data._typeCode = (RTICdrTypeCode *)&DDS_g_tc_octet;
+	SerializedType_g_tc_serialized_key_sequence._data._typeCode = (RTICdrTypeCode *)&DDS_g_tc_octet;
 
-	SerializedTypeKeyed_g_tc_serialized_data_sequence._data._typeCode = (RTICdrTypeCode *)&DDS_g_tc_octet;
+	SerializedType_g_tc_serialized_data_sequence._data._typeCode = (RTICdrTypeCode *)&DDS_g_tc_octet;
 
-	SerializedTypeKeyed_g_tc_members[0]._representation._typeCode = (RTICdrTypeCode *)& SerializedTypeKeyed_g_tc_key_hash_array;
-	SerializedTypeKeyed_g_tc_members[1]._representation._typeCode = (RTICdrTypeCode *)& SerializedTypeKeyed_g_tc_serialized_key_sequence;
-	SerializedTypeKeyed_g_tc_members[2]._representation._typeCode = (RTICdrTypeCode *)& SerializedTypeKeyed_g_tc_serialized_data_sequence;
+	SerializedType_g_tc_members[0]._representation._typeCode = (RTICdrTypeCode *)& SerializedType_g_tc_key_hash_array;
+	SerializedType_g_tc_members[1]._representation._typeCode = (RTICdrTypeCode *)& SerializedType_g_tc_serialized_key_sequence;
+	SerializedType_g_tc_members[2]._representation._typeCode = (RTICdrTypeCode *)& SerializedType_g_tc_serialized_data_sequence;
 
 	is_initialized = RTI_TRUE;
 
-	return &SerializedTypeKeyed_g_tc;
+	return &SerializedType_g_tc;
 }
 
-RTIBool SerializedTypeKeyed_initialize(
-    SerializedTypeKeyed* sample) {
-    return SerializedTypeKeyed_initialize_ex(sample,RTI_TRUE,RTI_TRUE);
+RTIBool SerializedType_initialize(
+    SerializedType* sample) {
+    return SerializedType_initialize_ex(sample,RTI_TRUE,RTI_TRUE);
 }
 
-RTIBool SerializedTypeKeyed_initialize_ex(
-    SerializedTypeKeyed* sample,RTIBool allocatePointers, RTIBool allocateMemory)
+RTIBool SerializedType_initialize_ex(
+    SerializedType* sample,RTIBool allocatePointers, RTIBool allocateMemory)
 {
 
     struct DDS_TypeAllocationParams_t allocParams =
@@ -140,13 +140,13 @@ RTIBool SerializedTypeKeyed_initialize_ex(
     allocParams.allocate_pointers =  (DDS_Boolean)allocatePointers;
     allocParams.allocate_memory = (DDS_Boolean)allocateMemory;
 
-    return SerializedTypeKeyed_initialize_w_params(
+    return SerializedType_initialize_w_params(
         sample,&allocParams);
 
 }
 
-RTIBool SerializedTypeKeyed_initialize_w_params(
-    SerializedTypeKeyed* sample, const struct DDS_TypeAllocationParams_t * allocParams)
+RTIBool SerializedType_initialize_w_params(
+    SerializedType* sample, const struct DDS_TypeAllocationParams_t * allocParams)
 {
     if (sample == NULL) {
         return RTI_FALSE;
@@ -162,14 +162,14 @@ RTIBool SerializedTypeKeyed_initialize_w_params(
 	return RTI_TRUE;
 }
 
-void SerializedTypeKeyed_finalize(
-    SerializedTypeKeyed* sample)
+void SerializedType_finalize(
+    SerializedType* sample)
 {
-    SerializedTypeKeyed_finalize_ex(sample,RTI_TRUE);
+    SerializedType_finalize_ex(sample,RTI_TRUE);
 }
 
-void SerializedTypeKeyed_finalize_ex(
-    SerializedTypeKeyed* sample,RTIBool deletePointers)
+void SerializedType_finalize_ex(
+    SerializedType* sample,RTIBool deletePointers)
 {
     struct DDS_TypeDeallocationParams_t deallocParams =
     DDS_TYPE_DEALLOCATION_PARAMS_DEFAULT;
@@ -180,12 +180,12 @@ void SerializedTypeKeyed_finalize_ex(
 
     deallocParams.delete_pointers = (DDS_Boolean)deletePointers;
 
-    SerializedTypeKeyed_finalize_w_params(
+    SerializedType_finalize_w_params(
         sample,&deallocParams);
 }
 
-void SerializedTypeKeyed_finalize_w_params(
-    SerializedTypeKeyed* sample,const struct DDS_TypeDeallocationParams_t * deallocParams)
+void SerializedType_finalize_w_params(
+    SerializedType* sample,const struct DDS_TypeDeallocationParams_t * deallocParams)
 {
     if (sample==NULL) {
         return;
@@ -199,15 +199,15 @@ void SerializedTypeKeyed_finalize_w_params(
 	DDS_OctetSeq_finalize(&sample->serialized_data);
 }
 
-void SerializedTypeKeyed_finalize_optional_members(
-    SerializedTypeKeyed* sample, RTIBool deletePointers)
+void SerializedType_finalize_optional_members(
+    SerializedType* sample, RTIBool deletePointers)
 {
 	return;
 }
 
-RTIBool SerializedTypeKeyed_copy(
-    SerializedTypeKeyed* dst,
-    const SerializedTypeKeyed* src)
+RTIBool SerializedType_copy(
+    SerializedType* dst,
+    const SerializedType* src)
 {
     if (dst == NULL || src == NULL) {
         return RTI_FALSE;
@@ -231,15 +231,15 @@ RTIBool SerializedTypeKeyed_copy(
 *
 * Defines:  TSeq, T
 *
-* Configure and implement 'SerializedTypeKeyed' sequence class.
+* Configure and implement 'SerializedType' sequence class.
 */
-#define T SerializedTypeKeyed
-#define TSeq SerializedTypeKeyedSeq
+#define T SerializedType
+#define TSeq SerializedTypeSeq
 
-#define T_initialize_w_params SerializedTypeKeyed_initialize_w_params
+#define T_initialize_w_params SerializedType_initialize_w_params
 
-#define T_finalize_w_params   SerializedTypeKeyed_finalize_w_params
-#define T_copy       SerializedTypeKeyed_copy
+#define T_finalize_w_params   SerializedType_finalize_w_params
+#define T_copy       SerializedType_copy
 
 #ifndef NDDS_STANDALONE_TYPE
 #include "dds_c/generic/dds_c_sequence_TSeq.gen"

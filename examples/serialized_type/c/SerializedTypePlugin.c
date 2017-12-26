@@ -2,7 +2,7 @@
 /*
 WARNING: THIS FILE IS AUTO-GENERATED. DO NOT MODIFY.
 
-This file was generated from SerializedTypeKeyed.idl using "rtiddsgen".
+This file was generated from SerializedType.idl using "rtiddsgen".
 The rtiddsgen tool is part of the RTI Connext distribution.
 For more information, type 'rtiddsgen -help' at a command shell
 or consult the RTI Connext manual.
@@ -64,20 +64,20 @@ extern unsigned int DDS_TypeCode_get_type_serialized_key_max_size(
 
 #define RTI_CDR_CURRENT_SUBMODULE RTI_CDR_SUBMODULE_MASK_STREAM
 
-#include "SerializedTypeKeyedPlugin.h"
+#include "SerializedTypePlugin.h"
 
 
-struct SerializedTypeKeyedPluginEndpointData {
+struct SerializedTypePluginEndpointData {
 	PRESTypePluginEndpointData defaultEndpointData;
 	struct PRESTypePlugin *typePlugin;
 };
 
-#define GET_DEFAULT_ENDPOINT_DATA(epd) ( ((struct SerializedTypeKeyedPluginEndpointData *)epd)->defaultEndpointData  )
-#define GET_TYPE_PLUGIN(epd) ( ((struct SerializedTypeKeyedPluginEndpointData *)epd)->typePlugin  )
+#define GET_DEFAULT_ENDPOINT_DATA(epd) ( ((struct SerializedTypePluginEndpointData *)epd)->defaultEndpointData  )
+#define GET_TYPE_PLUGIN(epd) ( ((struct SerializedTypePluginEndpointData *)epd)->typePlugin  )
 #define GET_TYPE_CODE(epd) (  (struct DDS_TypeCode *)(GET_TYPE_PLUGIN(epd)->typeCode)  )
 
-struct SerializedTypeKeyedPluginUserBuffer {
-	int serializedKeyMaxSize;
+struct SerializedTypePluginUserBuffer {
+	int serializedKeyMaxSizeNOTUSED;
 };
 
 
@@ -92,43 +92,43 @@ struct SerializedTypeKeyedPluginUserBuffer {
 */
 
 /* ----------------------------------------------------------------------------
-*  Type SerializedTypeKeyed
+*  Type SerializedType
 * -------------------------------------------------------------------------- */
 
 /* -----------------------------------------------------------------------------
 Support functions:
 * -------------------------------------------------------------------------- */
 
-SerializedTypeKeyed*
-SerializedTypeKeyedPluginSupport_create_data_w_params(
+SerializedType*
+SerializedTypePluginSupport_create_data_w_params(
     const struct DDS_TypeAllocationParams_t * alloc_params) 
 {
-    SerializedTypeKeyed *sample = NULL;
+    SerializedType *sample = NULL;
 
-    RTIOsapiHeap_allocateStructure(&(sample),SerializedTypeKeyed);
+    RTIOsapiHeap_allocateStructure(&(sample),SerializedType);
     if (sample == NULL) {
         return NULL;
     }
 
-    if (!SerializedTypeKeyed_initialize_w_params(sample,alloc_params)) {
+    if (!SerializedType_initialize_w_params(sample,alloc_params)) {
         RTIOsapiHeap_freeStructure(sample);
         sample=NULL;
     }
     return sample; 
 } 
 
-SerializedTypeKeyed *
-SerializedTypeKeyedPluginSupport_create_data_ex(RTIBool allocate_pointers) 
+SerializedType *
+SerializedTypePluginSupport_create_data_ex(RTIBool allocate_pointers) 
 {
-    SerializedTypeKeyed *sample = NULL;
+    SerializedType *sample = NULL;
 
-    RTIOsapiHeap_allocateStructure(&(sample),SerializedTypeKeyed);
+    RTIOsapiHeap_allocateStructure(&(sample),SerializedType);
 
     if(sample == NULL) {
         return NULL;
     }
 
-    if (!SerializedTypeKeyed_initialize_ex(sample,allocate_pointers, RTI_TRUE)) {
+    if (!SerializedType_initialize_ex(sample,allocate_pointers, RTI_TRUE)) {
         RTIOsapiHeap_freeStructure(sample);
         sample=NULL;
     }
@@ -136,52 +136,52 @@ SerializedTypeKeyedPluginSupport_create_data_ex(RTIBool allocate_pointers)
     return sample; 
 }
 
-SerializedTypeKeyed *
-SerializedTypeKeyedPluginSupport_create_data(void)
+SerializedType *
+SerializedTypePluginSupport_create_data(void)
 {
-    return SerializedTypeKeyedPluginSupport_create_data_ex(RTI_TRUE);
+    return SerializedTypePluginSupport_create_data_ex(RTI_TRUE);
 }
 
 void 
-SerializedTypeKeyedPluginSupport_destroy_data_w_params(
-    SerializedTypeKeyed *sample,
+SerializedTypePluginSupport_destroy_data_w_params(
+    SerializedType *sample,
     const struct DDS_TypeDeallocationParams_t * dealloc_params) {
 
-    SerializedTypeKeyed_finalize_w_params(sample,dealloc_params);
+    SerializedType_finalize_w_params(sample,dealloc_params);
 
     RTIOsapiHeap_freeStructure(sample);
     sample=NULL;
 }
 
 void 
-SerializedTypeKeyedPluginSupport_destroy_data_ex(
-    SerializedTypeKeyed *sample,RTIBool deallocate_pointers) {
+SerializedTypePluginSupport_destroy_data_ex(
+    SerializedType *sample,RTIBool deallocate_pointers) {
 
-    SerializedTypeKeyed_finalize_ex(sample,deallocate_pointers);
+    SerializedType_finalize_ex(sample,deallocate_pointers);
 
     RTIOsapiHeap_freeStructure(sample);
     sample=NULL;
 }
 
 void 
-SerializedTypeKeyedPluginSupport_destroy_data(
-    SerializedTypeKeyed *sample) {
+SerializedTypePluginSupport_destroy_data(
+    SerializedType *sample) {
 
-    SerializedTypeKeyedPluginSupport_destroy_data_ex(sample,RTI_TRUE);
+    SerializedTypePluginSupport_destroy_data_ex(sample,RTI_TRUE);
 
 }
 
 RTIBool 
-SerializedTypeKeyedPluginSupport_copy_data(
-    SerializedTypeKeyed *dst,
-    const SerializedTypeKeyed *src)
+SerializedTypePluginSupport_copy_data(
+    SerializedType *dst,
+    const SerializedType *src)
 {
-    return SerializedTypeKeyed_copy(dst,(const SerializedTypeKeyed*) src);
+    return SerializedType_copy(dst,(const SerializedType*) src);
 }
 
 /* This should be used to print formatted data */
-DDS_ReturnCode_t SerializedTypeKeyedTypeSupport_print_data2(
-	const SerializedTypeKeyed *sample,
+DDS_ReturnCode_t SerializedTypeTypeSupport_print_data2(
+	const SerializedType *sample,
 	FILE  *fp,
 	const char *desc,
 	unsigned int indent_level,
@@ -278,8 +278,8 @@ SerializedTypePlugin_dumpBytes(const unsigned char *pByte, unsigned int length, 
 
 
 void 
-SerializedTypeKeyedPluginSupport_print_data(
-    const SerializedTypeKeyed *sample,
+SerializedTypePluginSupport_print_data(
+    const SerializedType *sample,
     const char *desc,
     unsigned int indent_level)
 {
@@ -318,37 +318,37 @@ SerializedTypeKeyedPluginSupport_print_data(
 	SerializedTypePlugin_dumpBytes(pByte, length, indent_level);
 }
 
-SerializedTypeKeyed *
-SerializedTypeKeyedPluginSupport_create_key_ex(RTIBool allocate_pointers){
-    SerializedTypeKeyed *key = NULL;
+SerializedType *
+SerializedTypePluginSupport_create_key_ex(RTIBool allocate_pointers){
+    SerializedType *key = NULL;
 
-    RTIOsapiHeap_allocateStructure(&(key),SerializedTypeKeyedKeyHolder);
+    RTIOsapiHeap_allocateStructure(&(key),SerializedTypeKeyHolder);
 
-    SerializedTypeKeyed_initialize_ex(key,allocate_pointers, RTI_TRUE);
+    SerializedType_initialize_ex(key,allocate_pointers, RTI_TRUE);
 
     return key;
 }
 
-SerializedTypeKeyed *
-SerializedTypeKeyedPluginSupport_create_key(void)
+SerializedType *
+SerializedTypePluginSupport_create_key(void)
 {
-    return  SerializedTypeKeyedPluginSupport_create_key_ex(RTI_TRUE);
+    return  SerializedTypePluginSupport_create_key_ex(RTI_TRUE);
 }
 
 void 
-SerializedTypeKeyedPluginSupport_destroy_key_ex(
-    SerializedTypeKeyedKeyHolder *key,RTIBool deallocate_pointers)
+SerializedTypePluginSupport_destroy_key_ex(
+    SerializedTypeKeyHolder *key,RTIBool deallocate_pointers)
 {
-    SerializedTypeKeyed_finalize_ex(key,deallocate_pointers);
+    SerializedType_finalize_ex(key,deallocate_pointers);
 
     RTIOsapiHeap_freeStructure(key);
 }
 
 void 
-SerializedTypeKeyedPluginSupport_destroy_key(
-    SerializedTypeKeyedKeyHolder *key) {
+SerializedTypePluginSupport_destroy_key(
+    SerializedTypeKeyHolder *key) {
 
-SerializedTypeKeyedPluginSupport_destroy_key_ex(key, RTI_TRUE);
+SerializedTypePluginSupport_destroy_key_ex(key, RTI_TRUE);
 }
 
 /* ----------------------------------------------------------------------------
@@ -356,7 +356,7 @@ Callback functions:
 * ---------------------------------------------------------------------------- */
 
 PRESTypePluginParticipantData
-SerializedTypeKeyedPlugin_on_participant_attached(
+SerializedTypePlugin_on_participant_attached(
 	void *registration_data,
 	const struct PRESTypePluginParticipantInfo *participant_info,
 	RTIBool top_level_registration,
@@ -374,27 +374,27 @@ SerializedTypeKeyedPlugin_on_participant_attached(
 }
 
 void
-SerializedTypeKeyedPlugin_on_participant_detached(
+SerializedTypePlugin_on_participant_detached(
 	PRESTypePluginParticipantData participant_data)
 {
 	PRESTypePluginDefaultParticipantData_delete(participant_data);
 }
 
 PRESTypePluginEndpointData
-SerializedTypeKeyedPlugin_on_endpoint_attached(
+SerializedTypePlugin_on_endpoint_attached(
 	PRESTypePluginParticipantData participant_data,
 	const struct PRESTypePluginEndpointInfo *endpoint_info,
 	RTIBool top_level_registration,
 	void *containerPluginContext)
 {
-	struct SerializedTypeKeyedPluginEndpointData *customEndpointData = NULL;
+	struct SerializedTypePluginEndpointData *customEndpointData = NULL;
 	unsigned int serializedSampleMaxSize;
 	unsigned int serializedKeyMaxSize;
 
 	if (top_level_registration) {} /* To avoid warnings */
 	if (containerPluginContext) {} /* To avoid warnings */
 
-	customEndpointData = (struct SerializedTypeKeyedPluginEndpointData *)malloc(sizeof(*customEndpointData));
+	customEndpointData = (struct SerializedTypePluginEndpointData *)malloc(sizeof(*customEndpointData));
 	if (customEndpointData == NULL) {
 		goto errorReturn;
 	}
@@ -403,20 +403,20 @@ SerializedTypeKeyedPlugin_on_endpoint_attached(
 		participant_data,
 		endpoint_info,
 		(PRESTypePluginDefaultEndpointDataCreateSampleFunction)
-		SerializedTypeKeyedPluginSupport_create_data,
+		SerializedTypePluginSupport_create_data,
 		(PRESTypePluginDefaultEndpointDataDestroySampleFunction)
-		SerializedTypeKeyedPluginSupport_destroy_data,
+		SerializedTypePluginSupport_destroy_data,
 		(PRESTypePluginDefaultEndpointDataCreateKeyFunction)
-		SerializedTypeKeyedPluginSupport_create_key,
+		SerializedTypePluginSupport_create_key,
 		(PRESTypePluginDefaultEndpointDataDestroyKeyFunction)
-		SerializedTypeKeyedPluginSupport_destroy_key);
+		SerializedTypePluginSupport_destroy_key);
 
 	if (customEndpointData->defaultEndpointData == NULL) {
 		goto errorReturn;
 	}
 
 	customEndpointData->typePlugin = endpoint_info->typePlugin;
-	serializedKeyMaxSize = SerializedTypeKeyedPlugin_get_serialized_key_max_size(
+	serializedKeyMaxSize = SerializedTypePlugin_get_serialized_key_max_size(
 		customEndpointData, RTI_FALSE, RTI_CDR_ENCAPSULATION_ID_CDR_BE, 0);
 
 	if (!PRESTypePluginDefaultEndpointData_createMD5StreamWithInfo(
@@ -426,7 +426,7 @@ SerializedTypeKeyedPlugin_on_endpoint_attached(
 	}
 
 	if (endpoint_info->endpointKind == PRES_TYPEPLUGIN_ENDPOINT_WRITER) {
-		serializedSampleMaxSize = SerializedTypeKeyedPlugin_get_serialized_sample_max_size(
+		serializedSampleMaxSize = SerializedTypePlugin_get_serialized_sample_max_size(
 			customEndpointData, RTI_FALSE, RTI_CDR_ENCAPSULATION_ID_CDR_BE, 0);
 
 		PRESTypePluginDefaultEndpointData_setMaxSizeSerializedSample(
@@ -436,10 +436,10 @@ SerializedTypeKeyedPlugin_on_endpoint_attached(
 			customEndpointData->defaultEndpointData,
 			endpoint_info,
 			(PRESTypePluginGetSerializedSampleMaxSizeFunction)
-			SerializedTypeKeyedPlugin_get_serialized_sample_max_size, 
+			SerializedTypePlugin_get_serialized_sample_max_size, 
 			customEndpointData,
 			(PRESTypePluginGetSerializedSampleSizeFunction)
-			SerializedTypeKeyedPlugin_get_serialized_sample_size,
+			SerializedTypePlugin_get_serialized_sample_size,
 			customEndpointData) == RTI_FALSE) {
 
 			goto errorReturn;
@@ -460,40 +460,40 @@ SerializedTypeKeyedPlugin_on_endpoint_attached(
 
 
 void 
-SerializedTypeKeyedPlugin_on_endpoint_detached(
+SerializedTypePlugin_on_endpoint_detached(
     PRESTypePluginEndpointData endpoint_data)
 {  
     PRESTypePluginDefaultEndpointData_delete(GET_DEFAULT_ENDPOINT_DATA(endpoint_data));
 }
 
 void    
-SerializedTypeKeyedPlugin_return_sample(
+SerializedTypePlugin_return_sample(
     PRESTypePluginEndpointData endpoint_data,
-    SerializedTypeKeyed *sample,
+    SerializedType *sample,
     void *handle)
 {
 
-    SerializedTypeKeyed_finalize_optional_members(sample, RTI_TRUE);
+    SerializedType_finalize_optional_members(sample, RTI_TRUE);
 
     PRESTypePluginDefaultEndpointData_returnSample(
 		GET_DEFAULT_ENDPOINT_DATA(endpoint_data), sample, handle);
 }
 
 RTIBool 
-SerializedTypeKeyedPlugin_copy_sample(
+SerializedTypePlugin_copy_sample(
     PRESTypePluginEndpointData endpoint_data,
-    SerializedTypeKeyed *dst,
-    const SerializedTypeKeyed *src)
+    SerializedType *dst,
+    const SerializedType *src)
 {
     if (endpoint_data) {} /* To avoid warnings */
-    return SerializedTypeKeyedPluginSupport_copy_data(dst, src);
+    return SerializedTypePluginSupport_copy_data(dst, src);
 }
 
 /* ----------------------------------------------------------------------------
 (De)Serialize functions:
 * ------------------------------------------------------------------------- */
 unsigned int 
-SerializedTypeKeyedPlugin_get_serialized_sample_max_size(
+SerializedTypePlugin_get_serialized_sample_max_size(
     PRESTypePluginEndpointData endpoint_data,
     RTIBool include_encapsulation,
     RTIEncapsulationId encapsulation_id,
@@ -501,22 +501,22 @@ SerializedTypeKeyedPlugin_get_serialized_sample_max_size(
 
 /**
  * This plugin can only be used as a top-level type. 
- * It expects the SerializedTypeKeyed to contain data serialized with its
+ * It expects the SerializedType to contain data serialized with its
  * encapsulation header already there.
  *
  * @param serialize_encapsulation normally it indicates whether encapsulaton should be serialized
  *    it also indicates whether we are serializing the data as a a top-level type (in the
  *	  RTPSSerializedPayload or we are serializing as part of a nested type).
-      For SerializedTypeKeyedPlugin_serialize() it must be set to TRUE
+      For SerializedTypePlugin_serialize() it must be set to TRUE
  *
  * @param encapsulation_id the encapsulation identifier in case serialize_encapsulation==TRUE
- *    the implementation of SerializedTypeKeyedPlugin_serialize checks that the value of
+ *    the implementation of SerializedTypePlugin_serialize checks that the value of
  *    encapsulation_id matches the first two bytes in sample->key_hash
  */
 RTIBool 
-SerializedTypeKeyedPlugin_serialize(
+SerializedTypePlugin_serialize(
     PRESTypePluginEndpointData endpoint_data,
-    const SerializedTypeKeyed *sample, 
+    const SerializedType *sample, 
     struct RTICdrStream *stream,    
     RTIBool serialize_encapsulation,
     RTIEncapsulationId encapsulation_id,
@@ -576,7 +576,7 @@ SerializedTypeKeyedPlugin_serialize(
 	TODO. The code-block below does not belong here.
 	It should be pushed to the CDR module, perhaps inside
 	RTICdrStream_deserializeAndSetCdrEncapsulation so that the
-	stream size is alredy correct when SerializedTypeKeyedPlugin_deserialize_sample
+	stream size is alredy correct when SerializedTypePlugin_deserialize_sample
 	is called. 
 
 	Adjust the size of the CDR stream to not include the alignment
@@ -588,7 +588,7 @@ SerializedTypeKeyedPlugin_serialize(
 				  RTICdrStream_getEncapsulationOptions()
 */
 void
-SerializedTypeKeyedPlugin_remove_padding_from_stream(struct RTICdrStream *stream)
+SerializedTypePlugin_remove_padding_from_stream(struct RTICdrStream *stream)
 {
 	/* See http://issues.omg.org/browse/DDSXTY12-10 */
 	DDS_UnsignedShort padding_size_mask = 0x0003;
@@ -606,9 +606,9 @@ SerializedTypeKeyedPlugin_remove_padding_from_stream(struct RTICdrStream *stream
 * followed by the serialized data itself
 */
 RTIBool
-SerializedTypeKeyedPlugin_deserialize_sample(
+SerializedTypePlugin_deserialize_sample(
     PRESTypePluginEndpointData endpoint_data,
-    SerializedTypeKeyed *sample,
+    SerializedType *sample,
     struct RTICdrStream *stream,   
     RTIBool deserialize_encapsulation,
     RTIBool deserialize_sample,
@@ -633,11 +633,11 @@ SerializedTypeKeyedPlugin_deserialize_sample(
     /* TODO. The call does not belong here. It should be pushed 
 	 * inside RTICdrStream_deserializeAndSetCdrEncapsulation 
 	 */
-	SerializedTypeKeyedPlugin_remove_padding_from_stream(stream);
+	SerializedTypePlugin_remove_padding_from_stream(stream);
 
     if (deserialize_sample) {
-		/* Note that sample->key_hash was already set by SerializedTypeKeyedPlugin_deserialize()
-		   it is done there because SerializedTypeKeyedPlugin_deserialize_sample does not 
+		/* Note that sample->key_hash was already set by SerializedTypePlugin_deserialize()
+		   it is done there because SerializedTypePlugin_deserialize_sample does not 
 		   have access to the SampleInfo where that information is
 		*/
 
@@ -651,9 +651,9 @@ SerializedTypeKeyedPlugin_deserialize_sample(
 			goto fin;
 		}
 
-		/* Do not call SerializedTypeKeyed_initialize_ex initialize here 
+		/* Do not call SerializedType_initialize_ex initialize here 
 		   because it would override the key_hash field
-		   SerializedTypeKeyed_initialize_ex(sample, RTI_FALSE, RTI_FALSE); 
+		   SerializedType_initialize_ex(sample, RTI_FALSE, RTI_FALSE); 
 		 */
 		if (!DDS_OctetSeq_from_array(&sample->serialized_data, cdrBufferPtr, bytesLeftInStream) ) {
 			goto fin;
@@ -675,18 +675,18 @@ SerializedTypeKeyedPlugin_deserialize_sample(
 }
 
 RTIBool
-SerializedTypeKeyedPlugin_serialize_to_cdr_buffer(
+SerializedTypePlugin_serialize_to_cdr_buffer(
     char * buffer,
     unsigned int * length,
-    const SerializedTypeKeyed *sample)
+    const SerializedType *sample)
 {
 	/* TODO */
     return RTI_FALSE;     
 }
 
 RTIBool
-SerializedTypeKeyedPlugin_deserialize_from_cdr_buffer(
-    SerializedTypeKeyed *sample,
+SerializedTypePlugin_deserialize_from_cdr_buffer(
+    SerializedType *sample,
     const char * buffer,
     unsigned int length)
 {
@@ -695,16 +695,16 @@ SerializedTypeKeyedPlugin_deserialize_from_cdr_buffer(
     RTICdrStream_init(&stream);
     RTICdrStream_set(&stream, (char *)buffer, length);
 
-    SerializedTypeKeyed_finalize_optional_members(sample, RTI_TRUE);
-    return SerializedTypeKeyedPlugin_deserialize_sample( 
+    SerializedType_finalize_optional_members(sample, RTI_TRUE);
+    return SerializedTypePlugin_deserialize_sample( 
         NULL, sample,
         &stream, RTI_TRUE, RTI_TRUE, 
         NULL);
 }
 
 DDS_ReturnCode_t
-SerializedTypeKeyedPlugin_data_to_string(
-    const SerializedTypeKeyed *sample,
+SerializedTypePlugin_data_to_string(
+    const SerializedType *sample,
     char *str,
     DDS_UnsignedLong *str_size, 
     const struct DDS_PrintFormatProperty *property)
@@ -727,7 +727,7 @@ SerializedTypeKeyedPlugin_data_to_string(
         return DDS_RETCODE_BAD_PARAMETER;
     }
 
-    if (!SerializedTypeKeyedPlugin_serialize_to_cdr_buffer(
+    if (!SerializedTypePlugin_serialize_to_cdr_buffer(
         NULL, 
         &length, 
         sample)) {
@@ -739,7 +739,7 @@ SerializedTypeKeyedPlugin_data_to_string(
         return DDS_RETCODE_ERROR;
     }
 
-    if (!SerializedTypeKeyedPlugin_serialize_to_cdr_buffer(
+    if (!SerializedTypePlugin_serialize_to_cdr_buffer(
         buffer, 
         &length, 
         sample)) {
@@ -748,7 +748,7 @@ SerializedTypeKeyedPlugin_data_to_string(
     }
 
     data = DDS_DynamicData_new(
-        SerializedTypeKeyed_get_typecode(), 
+        SerializedType_get_typecode(), 
         &DDS_DYNAMIC_DATA_PROPERTY_DEFAULT);
     if (data == NULL) {
         RTIOsapiHeap_freeBuffer(buffer);
@@ -795,7 +795,7 @@ SerializedTypeKeyedPlugin_data_to_string(
   so we can use it to get to the &(collatoreSample->keyHash)
 */
 void
-PRESCstReaderCollator_copyKeyHash(DDS_Octet *outKeyHashPtr, SerializedTypeKeyed **sample) \
+PRESCstReaderCollator_copyKeyHash(DDS_Octet *outKeyHashPtr, SerializedType **sample) \
 {
 	size_t dataOffset = offsetof(struct PRESCstReaderCollatorSample, data);
 	struct PRESCstReaderCollatorSample *collatorSample = (struct PRESCstReaderCollatorSample *) ((char *)sample - dataOffset);
@@ -804,9 +804,9 @@ PRESCstReaderCollator_copyKeyHash(DDS_Octet *outKeyHashPtr, SerializedTypeKeyed 
 }
 
 RTIBool 
-SerializedTypeKeyedPlugin_deserialize(
+SerializedTypePlugin_deserialize(
     PRESTypePluginEndpointData endpoint_data,
-    SerializedTypeKeyed **sample,
+    SerializedType **sample,
     RTIBool * drop_sample,
     struct RTICdrStream *stream,   
     RTIBool deserialize_encapsulation,
@@ -815,14 +815,14 @@ SerializedTypeKeyedPlugin_deserialize(
 {
 
     RTIBool result;
-    const char *METHOD_NAME = "SerializedTypeKeyedPlugin_deserialize";
+    const char *METHOD_NAME = "SerializedTypePlugin_deserialize";
 
 	PRESCstReaderCollator_copyKeyHash((*sample)->key_hash, sample);
 
     if (drop_sample) {} /* To avoid warnings */
 
     stream->_xTypesState.unassignable = RTI_FALSE;
-    result= SerializedTypeKeyedPlugin_deserialize_sample( 
+    result= SerializedTypePlugin_deserialize_sample( 
         endpoint_data, (sample != NULL)?*sample:NULL,
         stream, deserialize_encapsulation, deserialize_sample, 
         endpoint_plugin_qos);
@@ -837,13 +837,13 @@ SerializedTypeKeyedPlugin_deserialize(
         RTICdrLog_exception(
             METHOD_NAME, 
             &RTI_CDR_LOG_UNASSIGNABLE_SAMPLE_OF_TYPE_s, 
-            "SerializedTypeKeyed");
+            "SerializedType");
     }
 
     return result;
 }
 
-RTIBool SerializedTypeKeyedPlugin_skip(
+RTIBool SerializedTypePlugin_skip(
     PRESTypePluginEndpointData endpoint_data,
     struct RTICdrStream *stream,   
     RTIBool skip_encapsulation,
@@ -858,7 +858,7 @@ RTIBool SerializedTypeKeyedPlugin_skip(
 }
 
 unsigned int 
-SerializedTypeKeyedPlugin_get_serialized_sample_max_size_ex(
+SerializedTypePlugin_get_serialized_sample_max_size_ex(
     PRESTypePluginEndpointData endpoint_data,
     RTIBool * overflow,
     RTIBool include_encapsulation,
@@ -872,7 +872,7 @@ SerializedTypeKeyedPlugin_get_serialized_sample_max_size_ex(
 }
 
 unsigned int 
-SerializedTypeKeyedPlugin_get_serialized_sample_max_size(
+SerializedTypePlugin_get_serialized_sample_max_size(
     PRESTypePluginEndpointData endpoint_data,
     RTIBool include_encapsulation,
     RTIEncapsulationId encapsulation_id,
@@ -881,7 +881,7 @@ SerializedTypeKeyedPlugin_get_serialized_sample_max_size(
     unsigned int size;
     RTIBool overflow = RTI_FALSE;
 
-    size = SerializedTypeKeyedPlugin_get_serialized_sample_max_size_ex(
+    size = SerializedTypePlugin_get_serialized_sample_max_size_ex(
         endpoint_data,&overflow,include_encapsulation,encapsulation_id,current_alignment);
 
     if (overflow) {
@@ -892,7 +892,7 @@ SerializedTypeKeyedPlugin_get_serialized_sample_max_size(
 }
 
 unsigned int 
-SerializedTypeKeyedPlugin_get_serialized_sample_min_size(
+SerializedTypePlugin_get_serialized_sample_min_size(
     PRESTypePluginEndpointData endpoint_data,
     RTIBool include_encapsulation,
     RTIEncapsulationId encapsulation_id,
@@ -911,12 +911,12 @@ SerializedTypeKeyedPlugin_get_serialized_sample_min_size(
 * encapsulation flags.
 */
 unsigned int
-SerializedTypeKeyedPlugin_get_serialized_sample_size(
+SerializedTypePlugin_get_serialized_sample_size(
     PRESTypePluginEndpointData endpoint_data,
     RTIBool include_encapsulation,
     RTIEncapsulationId encapsulation_id,
     unsigned int current_alignment,
-    const SerializedTypeKeyed * sample) 
+    const SerializedType * sample) 
 {
 	/* TODO: review alignments */
 
@@ -937,19 +937,19 @@ Key Management functions:
 * -------------------------------------------------------------------------------------- */
 
 PRESTypePluginKeyKind 
-SerializedTypeKeyedPlugin_get_key_kind_USER_KEY(void)
+SerializedTypePlugin_get_key_kind_USER_KEY(void)
 {
     return PRES_TYPEPLUGIN_USER_KEY;
 }
 
 PRESTypePluginKeyKind
-SerializedTypeKeyedPlugin_get_key_kind_NO_KEY(void)
+SerializedTypePlugin_get_key_kind_NO_KEY(void)
 {
 	return PRES_TYPEPLUGIN_NO_KEY;
 }
 
 RTIBool 
-SerializedTypeKeyedPlugin_serialize_key_to_cdr_buffer(
+SerializedTypePlugin_serialize_key_to_cdr_buffer(
 	char * buffer,
 	unsigned int *length,
 	const void *typed_sample, /* This should point to a sample of the type expected by serializeKeyFcn */
@@ -969,9 +969,9 @@ SerializedTypeKeyedPlugin_serialize_key_to_cdr_buffer(
 }
 
 RTIBool 
-SerializedTypeKeyedPlugin_serialize_key(
+SerializedTypePlugin_serialize_key(
     PRESTypePluginEndpointData endpoint_data,
-    const SerializedTypeKeyed *sample, 
+    const SerializedType *sample, 
     struct RTICdrStream *stream,    
     RTIBool serialize_encapsulation,
     RTIEncapsulationId encapsulation_id,
@@ -1007,9 +1007,9 @@ SerializedTypeKeyedPlugin_serialize_key(
     return RTI_TRUE;
 }
 
-RTIBool SerializedTypeKeyedPlugin_deserialize_key_sample(
+RTIBool SerializedTypePlugin_deserialize_key_sample(
     PRESTypePluginEndpointData endpoint_data,
-    SerializedTypeKeyed *sample, 
+    SerializedType *sample, 
     struct RTICdrStream *stream,
     RTIBool deserialize_encapsulation,
     RTIBool deserialize_key,
@@ -1046,9 +1046,9 @@ RTIBool SerializedTypeKeyedPlugin_deserialize_key_sample(
 
 }
 
-RTIBool SerializedTypeKeyedPlugin_deserialize_key(
+RTIBool SerializedTypePlugin_deserialize_key(
     PRESTypePluginEndpointData endpoint_data,
-    SerializedTypeKeyed **sample, 
+    SerializedType **sample, 
     RTIBool * drop_sample,
     struct RTICdrStream *stream,
     RTIBool deserialize_encapsulation,
@@ -1059,7 +1059,7 @@ RTIBool SerializedTypeKeyedPlugin_deserialize_key(
     RTIBool result;
     if (drop_sample) {} /* To avoid warnings */
     stream->_xTypesState.unassignable = RTI_FALSE;
-    result= SerializedTypeKeyedPlugin_deserialize_key_sample(
+    result= SerializedTypePlugin_deserialize_key_sample(
         endpoint_data, (sample != NULL)?*sample:NULL, stream,
         deserialize_encapsulation, deserialize_key, endpoint_plugin_qos);
     if (result) {
@@ -1073,19 +1073,19 @@ RTIBool SerializedTypeKeyedPlugin_deserialize_key(
 }
 
 unsigned int
-SerializedTypeKeyedPlugin_get_serialized_key_max_size_ex(
+SerializedTypePlugin_get_serialized_key_max_size_ex(
     PRESTypePluginEndpointData endpoint_data,
     RTIBool * overflow,
     RTIBool include_encapsulation,
     RTIEncapsulationId encapsulation_id,
     unsigned int current_alignment)
 {
-	return SerializedTypeKeyedPlugin_get_serialized_key_max_size(
+	return SerializedTypePlugin_get_serialized_key_max_size(
 		endpoint_data, include_encapsulation, encapsulation_id, current_alignment);
 }
 
 unsigned int
-SerializedTypeKeyedPlugin_get_serialized_key_max_size(
+SerializedTypePlugin_get_serialized_key_max_size(
     PRESTypePluginEndpointData endpoint_data,
     RTIBool include_encapsulation,
     RTIEncapsulationId encapsulation_id,
@@ -1098,9 +1098,9 @@ SerializedTypeKeyedPlugin_get_serialized_key_max_size(
 }
 
 RTIBool 
-SerializedTypeKeyedPlugin_serialized_sample_to_key(
+SerializedTypePlugin_serialized_sample_to_key(
     PRESTypePluginEndpointData endpoint_data,
-    SerializedTypeKeyed *sample,
+    SerializedType *sample,
     struct RTICdrStream *stream, 
     RTIBool deserialize_encapsulation,  
     RTIBool deserialize_key, 
@@ -1112,10 +1112,10 @@ SerializedTypeKeyedPlugin_serialized_sample_to_key(
 }
 
 RTIBool 
-SerializedTypeKeyedPlugin_instance_to_key(
+SerializedTypePlugin_instance_to_key(
     PRESTypePluginEndpointData endpoint_data,
-    SerializedTypeKeyedKeyHolder *dst, 
-    const SerializedTypeKeyed *src)
+    SerializedTypeKeyHolder *dst, 
+    const SerializedType *src)
 {
 	/* TODO */
     if (endpoint_data) {} /* To avoid warnings */   
@@ -1128,10 +1128,10 @@ SerializedTypeKeyedPlugin_instance_to_key(
 }
 
 RTIBool 
-SerializedTypeKeyedPlugin_key_to_instance(
+SerializedTypePlugin_key_to_instance(
     PRESTypePluginEndpointData endpoint_data,
-    SerializedTypeKeyed *dst, const
-    SerializedTypeKeyedKeyHolder *src)
+    SerializedType *dst, const
+    SerializedTypeKeyHolder *src)
 {
 	/* TODO */
     if (endpoint_data) {} /* To avoid warnings */   
@@ -1143,10 +1143,10 @@ SerializedTypeKeyedPlugin_key_to_instance(
 }
 
 RTIBool 
-SerializedTypeKeyedPlugin_instance_to_keyhash(
+SerializedTypePlugin_instance_to_keyhash(
     PRESTypePluginEndpointData endpoint_data,
     DDS_KeyHash_t *keyhash,
-    const SerializedTypeKeyed *instance)
+    const SerializedType *instance)
 {
 	if (endpoint_data) {} /* To avoid warnings */
 
@@ -1157,7 +1157,7 @@ SerializedTypeKeyedPlugin_instance_to_keyhash(
 }
 
 RTIBool 
-SerializedTypeKeyedPlugin_serialized_sample_to_keyhash(
+SerializedTypePlugin_serialized_sample_to_keyhash(
     PRESTypePluginEndpointData endpoint_data,
     struct RTICdrStream *stream, 
     DDS_KeyHash_t *keyhash,
@@ -1175,7 +1175,7 @@ SerializedTypeKeyedPlugin_serialized_sample_to_keyhash(
 *   (these used to be #defined to the underlying presentation fucntion)
 * ------------------------------------------------------------------------ */
 void *
-SerializedTypeKeyedPlugin_get_sample(
+SerializedTypePlugin_get_sample(
 	PRESTypePluginEndpointData endpointData,
 	void **handle /* out */)
 {
@@ -1185,7 +1185,7 @@ SerializedTypeKeyedPlugin_get_sample(
 }
 
 RTIBool
-SerializedTypeKeyedPlugin_get_buffer(
+SerializedTypePlugin_get_buffer(
 	PRESTypePluginEndpointData endpointData,
 	struct REDABuffer *buffer,
 	RTIEncapsulationId encapsulationId,
@@ -1199,7 +1199,7 @@ SerializedTypeKeyedPlugin_get_buffer(
 }
 
 void
-SerializedTypeKeyedPlugin_return_buffer(
+SerializedTypePlugin_return_buffer(
 	PRESTypePluginEndpointData endpointData,
 	struct REDABuffer *buffer,
 	RTIEncapsulationId encapsulationId)
@@ -1211,7 +1211,7 @@ SerializedTypeKeyedPlugin_return_buffer(
 }
 
 void *
-SerializedTypeKeyedPlugin_get_key(
+SerializedTypePlugin_get_key(
 	PRESTypePluginEndpointData endpointData,
 	void **handle /* out */)
 {
@@ -1221,7 +1221,7 @@ SerializedTypeKeyedPlugin_get_key(
 }
 
 void
-SerializedTypeKeyedPlugin_return_key(
+SerializedTypePlugin_return_key(
 	PRESTypePluginEndpointData endpointData,
 	void *key, void *handle)
 {
@@ -1232,7 +1232,7 @@ SerializedTypeKeyedPlugin_return_key(
 }
 
 void *
-SerializedTypeKeyedPlugin_create_sample(
+SerializedTypePlugin_create_sample(
 	PRESTypePluginEndpointData endpointData)
 {
 	return PRESTypePluginDefaultEndpointData_createSample(
@@ -1240,7 +1240,7 @@ SerializedTypeKeyedPlugin_create_sample(
 }
 
 void
-SerializedTypeKeyedPlugin_destroy_sample(
+SerializedTypePlugin_destroy_sample(
 	PRESTypePluginEndpointData endpointData,
 	void *sample)
 {
@@ -1252,14 +1252,14 @@ SerializedTypeKeyedPlugin_destroy_sample(
 /* ------------------------------------------------------------------------
 * Plug-in Installation Methods
 * ------------------------------------------------------------------------ */
-/* This function should not be used. Use SerializedTypeKeyedPlugin_new2() */
-struct PRESTypePlugin *SerializedTypeKeyedPlugin_new(void)
+/* This function should not be used. Use SerializedTypePlugin_new2() */
+struct PRESTypePlugin *SerializedTypePlugin_new(void)
 {
 	return NULL;
 }
 
 
-struct PRESTypePlugin *SerializedTypeKeyedPlugin_new2( struct DDS_TypeCode *type_code, int serialized_key_max_size ) 
+struct PRESTypePlugin *SerializedTypePlugin_new2( struct DDS_TypeCode *type_code ) 
 { 
     struct PRESTypePlugin *plugin = NULL;
     const struct PRESTypePluginVersion PLUGIN_VERSION = 
@@ -1276,93 +1276,93 @@ struct PRESTypePlugin *SerializedTypeKeyedPlugin_new2( struct DDS_TypeCode *type
 
     /* set up parent's function pointers */
     plugin->onParticipantAttached =	(PRESTypePluginOnParticipantAttachedCallback)
-		SerializedTypeKeyedPlugin_on_participant_attached;
+		SerializedTypePlugin_on_participant_attached;
     plugin->onParticipantDetached =	(PRESTypePluginOnParticipantDetachedCallback)
-		SerializedTypeKeyedPlugin_on_participant_detached;
+		SerializedTypePlugin_on_participant_detached;
     plugin->onEndpointAttached =    (PRESTypePluginOnEndpointAttachedCallback)
-		SerializedTypeKeyedPlugin_on_endpoint_attached;
+		SerializedTypePlugin_on_endpoint_attached;
     plugin->onEndpointDetached =    (PRESTypePluginOnEndpointDetachedCallback)
-		SerializedTypeKeyedPlugin_on_endpoint_detached;
+		SerializedTypePlugin_on_endpoint_detached;
 
     plugin->copySampleFnc =    (PRESTypePluginCopySampleFunction)
-		SerializedTypeKeyedPlugin_copy_sample;
+		SerializedTypePlugin_copy_sample;
     plugin->createSampleFnc =    (PRESTypePluginCreateSampleFunction)
-		SerializedTypeKeyedPlugin_create_sample;
+		SerializedTypePlugin_create_sample;
     plugin->destroySampleFnc =    (PRESTypePluginDestroySampleFunction)
-		SerializedTypeKeyedPlugin_destroy_sample;
+		SerializedTypePlugin_destroy_sample;
 
     plugin->serializeFnc =    (PRESTypePluginSerializeFunction)
-		SerializedTypeKeyedPlugin_serialize;
+		SerializedTypePlugin_serialize;
     plugin->deserializeFnc =  (PRESTypePluginDeserializeFunction)
-		SerializedTypeKeyedPlugin_deserialize;
+		SerializedTypePlugin_deserialize;
     plugin->getSerializedSampleMaxSizeFnc =  (PRESTypePluginGetSerializedSampleMaxSizeFunction)
-		SerializedTypeKeyedPlugin_get_serialized_sample_max_size;
+		SerializedTypePlugin_get_serialized_sample_max_size;
     plugin->getSerializedSampleMinSizeFnc =  (PRESTypePluginGetSerializedSampleMinSizeFunction)
-		SerializedTypeKeyedPlugin_get_serialized_sample_min_size;
+		SerializedTypePlugin_get_serialized_sample_min_size;
 
     plugin->getSampleFnc =    (PRESTypePluginGetSampleFunction)
-		SerializedTypeKeyedPlugin_get_sample;
+		SerializedTypePlugin_get_sample;
     plugin->returnSampleFnc = (PRESTypePluginReturnSampleFunction)
-		SerializedTypeKeyedPlugin_return_sample;
+		SerializedTypePlugin_return_sample;
 
 	if ( (type_code != NULL) && DDS_TypeCode_is_type_keyed(type_code) ) {
 		plugin->getKeyKindFnc = (PRESTypePluginGetKeyKindFunction)
-			SerializedTypeKeyedPlugin_get_key_kind_USER_KEY;
+			SerializedTypePlugin_get_key_kind_USER_KEY;
 	}
 	else {
 		plugin->getKeyKindFnc = (PRESTypePluginGetKeyKindFunction)
-			SerializedTypeKeyedPlugin_get_key_kind_NO_KEY;
+			SerializedTypePlugin_get_key_kind_NO_KEY;
 	}
 
     plugin->getSerializedKeyMaxSizeFnc = (PRESTypePluginGetSerializedKeyMaxSizeFunction)
-		SerializedTypeKeyedPlugin_get_serialized_key_max_size;
+		SerializedTypePlugin_get_serialized_key_max_size;
     plugin->serializeKeyFnc =    (PRESTypePluginSerializeKeyFunction)
-		SerializedTypeKeyedPlugin_serialize_key;
+		SerializedTypePlugin_serialize_key;
     plugin->deserializeKeyFnc =  (PRESTypePluginDeserializeKeyFunction)
-		SerializedTypeKeyedPlugin_deserialize_key;
+		SerializedTypePlugin_deserialize_key;
     plugin->deserializeKeySampleFnc = (PRESTypePluginDeserializeKeySampleFunction)
-		SerializedTypeKeyedPlugin_deserialize_key_sample;
+		SerializedTypePlugin_deserialize_key_sample;
 
     plugin-> instanceToKeyHashFnc = (PRESTypePluginInstanceToKeyHashFunction)
-		SerializedTypeKeyedPlugin_instance_to_keyhash;
+		SerializedTypePlugin_instance_to_keyhash;
     plugin->serializedSampleToKeyHashFnc = (PRESTypePluginSerializedSampleToKeyHashFunction)
-		SerializedTypeKeyedPlugin_serialized_sample_to_keyhash;
+		SerializedTypePlugin_serialized_sample_to_keyhash;
 
     plugin->getKeyFnc =      (PRESTypePluginGetKeyFunction)
-		SerializedTypeKeyedPlugin_get_key;
+		SerializedTypePlugin_get_key;
     plugin->returnKeyFnc =   (PRESTypePluginReturnKeyFunction)
-		SerializedTypeKeyedPlugin_return_key;
+		SerializedTypePlugin_return_key;
 
     plugin->instanceToKeyFnc =   (PRESTypePluginInstanceToKeyFunction)
-		SerializedTypeKeyedPlugin_instance_to_key;
+		SerializedTypePlugin_instance_to_key;
     plugin->keyToInstanceFnc =   (PRESTypePluginKeyToInstanceFunction)
-		SerializedTypeKeyedPlugin_key_to_instance;
+		SerializedTypePlugin_key_to_instance;
 
     plugin->serializedKeyToKeyHashFnc = NULL; /* Not supported yet */
-	plugin->typeCode = (struct RTICdrTypeCode *)type_code;  /*  SerializedTypeKeyed_get_typecode(); */
+	plugin->typeCode = (struct RTICdrTypeCode *)type_code;  /*  SerializedType_get_typecode(); */
 
     plugin->languageKind = PRES_TYPEPLUGIN_DDS_TYPE;
 
     /* Serialized buffer */
     plugin->getBuffer =     (PRESTypePluginGetBufferFunction)
-		SerializedTypeKeyedPlugin_get_buffer;
+		SerializedTypePlugin_get_buffer;
     plugin->returnBuffer =   (PRESTypePluginReturnBufferFunction)
-		SerializedTypeKeyedPlugin_return_buffer;
+		SerializedTypePlugin_return_buffer;
     plugin->getSerializedSampleSizeFnc =    (PRESTypePluginGetSerializedSampleSizeFunction)
-		SerializedTypeKeyedPlugin_get_serialized_sample_size;
+		SerializedTypePlugin_get_serialized_sample_size;
 
-    plugin->endpointTypeName = SerializedTypeKeyedTYPENAME;
+    plugin->endpointTypeName = SerializedTypeTYPENAME;
 
-	struct SerializedTypeKeyedPluginUserBuffer *pluginUserBuffer;
-	RTIOsapiHeap_allocateStructure(&pluginUserBuffer, struct SerializedTypeKeyedPluginUserBuffer);
-	pluginUserBuffer->serializedKeyMaxSize = serialized_key_max_size;
+	struct SerializedTypePluginUserBuffer *pluginUserBuffer;
+	RTIOsapiHeap_allocateStructure(&pluginUserBuffer, struct SerializedTypePluginUserBuffer);
+	// pluginUserBuffer->serializedKeyMaxSizeNOTUSED = serialized_key_max_size;
 	plugin->_userBuffer = (PRESWord *)pluginUserBuffer;
 
     return plugin;
 }
 
 void
-SerializedTypeKeyedPlugin_delete(struct PRESTypePlugin *plugin)
+SerializedTypePlugin_delete(struct PRESTypePlugin *plugin)
 {
 	RTIOsapiHeap_freeStructure(plugin->_userBuffer);
 	RTIOsapiHeap_freeStructure(plugin);
