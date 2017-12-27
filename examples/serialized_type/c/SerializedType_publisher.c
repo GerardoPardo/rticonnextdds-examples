@@ -47,6 +47,17 @@ static int publisher_shutdown(
     return status;
 }
 
+void strcpy_s(char * str, int lenMax, const char * strToCopy) {
+    if (!str || !strToCopy) {
+        return;
+    }
+    int strToCopyLen = strlen(strToCopy) + 1;
+    if(strToCopyLen < lenMax) {
+        lenMax = strToCopyLen;
+    }
+    strncpy(str, strToCopy, lenMax);
+    str[lenMax - 1] = '\0';
+}
 
 static int publisher_main(int domainId, int sample_count)
 {
@@ -58,8 +69,7 @@ static int publisher_main(int domainId, int sample_count)
     SerializedType *instance = NULL;
     DDS_ReturnCode_t retcode;
     DDS_InstanceHandle_t instance_handle = DDS_HANDLE_NIL;
-    const char *type_name = NULL;
-    int count = 0;  
+    int count = 0, i = 0;  
     struct DDS_Duration_t send_period = {1,0};
 
     /* To customize participant QoS, use 
@@ -94,8 +104,7 @@ static int publisher_main(int domainId, int sample_count)
 	*/
 	retcode = SerializedTypeTypeSupport_register_type2(
 		participant, "ShapeType",
-		ShapeType_get_typecode(),
-		ShapeTypePlugin_get_serialized_key_max_size(NULL, RTI_FALSE, 0, 0));
+		ShapeType_get_typecode());
 
 	if (retcode != DDS_RETCODE_OK) {
         fprintf(stderr, "register_type error %d\n", retcode);
@@ -153,8 +162,8 @@ static int publisher_main(int domainId, int sample_count)
 	int  ybase[NUMBER_OF_COLORS] = {  0,  0,  0,   0 };
 
 	/* Memory area where to put the serialized (ShapeType) data */
-	int serializationLength;
-	int serializationBufferSize = ShapeTypePlugin_get_serialized_sample_max_size(NULL, RTI_TRUE, 0, 0);
+	unsigned int serializationLength;
+	unsigned int serializationBufferSize = ShapeTypePlugin_get_serialized_sample_max_size(NULL, RTI_TRUE, 0, 0);
 
 	/* RTI_CDR_MAX_SERIALIZED_SIZE indites the type is unbounded normally the application
 	   would have some knwledge of the size. Here we print an error in this situation */
@@ -183,7 +192,7 @@ static int publisher_main(int domainId, int sample_count)
 				 the serialization 
 	    */
 		serializationLength = serializationBufferSize;
-		if (!ShapeTypePlugin_serialize_to_cdr_buffer(serializationBuffer, &serializationLength, &shapeType)) {
+		if (!ShapeTypePlugin_serialize_to_cdr_buffer((char *)serializationBuffer, &serializationLength, &shapeType)) {
 			fprintf(stderr, "Serialization of ShapeType failed\n");
 		}
 		else {
@@ -196,7 +205,7 @@ static int publisher_main(int domainId, int sample_count)
 				serializationLength, serializationBufferSize);
 
 			/* TODO: Use ShapeType_serialize_key */ 
-			for (int i = 0; i < 16; ++i) {
+			for (i = 0; i < 16; ++i) {
 				instance->key_hash[i] = (char)(count % NUMBER_OF_COLORS);
 			}
 
