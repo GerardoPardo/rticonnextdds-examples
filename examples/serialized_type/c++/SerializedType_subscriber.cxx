@@ -48,6 +48,9 @@ objs\<arch>\SerializedType_subscriber <domain_id>
 #include "SerializedType.h"
 #include "SerializedTypeSupport.h"
 #include "ndds/ndds_cpp.h"
+#include "ShapeType.h"
+#include "SerializedTypePlugin.h"
+#include "ShapeTypePlugin.h"
 
 class SerializedTypeListener : public DDSDataReaderListener {
   public:
@@ -107,6 +110,9 @@ void SerializedTypeListener::on_data_available(DDSDataReader* reader)
         if (info_seq[i].valid_data) {
             printf("Received data\n");
             SerializedTypeTypeSupport::print_data(&data_seq[i]);
+
+            /* Pretty print it using the TypeCode if available*/
+            SerializedTypeTypeSupport_print_data2(&data_seq[i], stdout, "SerializedTypeSeq (as ShapeType)", 0, ShapeType_get_typecode());
         }
     }
 
@@ -186,21 +192,20 @@ extern "C" int subscriber_main(int domainId, int sample_count)
         return -1;
     }
 
-    /* Register the type before creating the topic */
-    type_name = SerializedTypeTypeSupport::get_type_name();
-    retcode = SerializedTypeTypeSupport::register_type(
-        participant, type_name);
+    /* A new method named register_type_2 needs to be added to the header file */
+    retcode = SerializedTypeTypeSupport::register_type2(participant, 
+            "ShapeType", ShapeType_get_typecode());
     if (retcode != DDS_RETCODE_OK) {
         fprintf(stderr, "register_type error %d\n", retcode);
         subscriber_shutdown(participant);
         return -1;
     }
 
-    /* To customize the topic QoS, use 
+    /* To customize topic QoS, use 
     the configuration file USER_QOS_PROFILES.xml */
     topic = participant->create_topic(
-        "Example SerializedType",
-        type_name, DDS_TOPIC_QOS_DEFAULT, NULL /* listener */,
+        "Square",
+        "ShapeType", DDS_TOPIC_QOS_DEFAULT, NULL /* listener */,
         DDS_STATUS_MASK_NONE);
     if (topic == NULL) {
         fprintf(stderr, "create_topic error\n");
