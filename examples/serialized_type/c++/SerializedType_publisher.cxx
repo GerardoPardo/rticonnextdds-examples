@@ -49,6 +49,7 @@ objs\<arch>\SerializedType_subscriber <domain_id>
 #include "SerializedTypeSupport.h"
 #include "ndds/ndds_cpp.h"
 #include "ShapeType.h"
+#include "SerializedTypePlugin.h"
 #include "ShapeTypePlugin.h"
 
 /* Delete all entities */
@@ -135,8 +136,6 @@ extern "C" int publisher_main(int domainId, int sample_count)
         return -1;
     }
 
-    /* Register type before creating topic */
-    type_name = SerializedTypeTypeSupport::get_type_name();
     /* A new method named register_type_2 needs to be added to the header file */
     retcode = SerializedTypeTypeSupport::register_type2(participant, 
             "ShapeType", ShapeType_get_typecode());
@@ -149,8 +148,8 @@ extern "C" int publisher_main(int domainId, int sample_count)
     /* To customize topic QoS, use 
     the configuration file USER_QOS_PROFILES.xml */
     topic = participant->create_topic(
-        "Example SerializedType",
-        type_name, DDS_TOPIC_QOS_DEFAULT, NULL /* listener */,
+        "Square",
+        "ShapeType", DDS_TOPIC_QOS_DEFAULT, NULL /* listener */,
         DDS_STATUS_MASK_NONE);
     if (topic == NULL) {
         fprintf(stderr, "create_topic error\n");
@@ -176,12 +175,13 @@ extern "C" int publisher_main(int domainId, int sample_count)
     }
 
     /* Create data sample for writing */
-    instance = SerializedTypeTypeSupport::create_data();
+    instance = SerializedTypePluginSupport_create_data_ex(DDS_BOOLEAN_TRUE);
     if (instance == NULL) {
         fprintf(stderr, "SerializedTypeTypeSupport::create_data error\n");
         publisher_shutdown(participant);
         return -1;
     }
+    instance->serialized_data.maximum(0);
 
     ShapeType shapeType;
     ShapeType_initialize(&shapeType);
@@ -228,20 +228,20 @@ extern "C" int publisher_main(int domainId, int sample_count)
                   serializationLength  - contains the number of bytes in serializationBuffer used by the serialization 
              */
             /* Use DDS_OctetSeq_loan_contiguous() instead of DDS_OctetSeq_copy() to save one copy */
-            DDS_OctetSeq_loan_contiguous(&(instance->serialized_data), serializationBuffer,
-                serializationLength, serializationBufferSize);
 
-            /* TODO: Use ShapeType_serialize_key */ 
+            (instance->serialized_data).loan_contiguous(serializationBuffer, serializationLength, serializationBufferSize);
+
+            // /* TODO: Use ShapeType_serialize_key */ 
             for (i = 0; i < 16; ++i) {
                 instance->key_hash[i] = (char)(count % NUMBER_OF_COLORS);
             }
-
-            /* Modify the data to be sent here */
+            
             retcode = SerializedType_writer->write(*instance, instance_handle);
             if (retcode != DDS_RETCODE_OK) {
                 fprintf(stderr, "write error %d\n", retcode);
             }
-            DDS_OctetSeq_unloan(&(instance->serialized_data));
+
+            instance->serialized_data.unloan();
         }
 
         NDDSUtility::sleep(send_period);
@@ -280,11 +280,9 @@ int main(int argc, char *argv[])
         sample_count = atoi(argv[2]);
     }
 
-    /* Uncomment this to turn on additional logging
-    NDDSConfigLogger::get_instance()->
-    set_verbosity_by_category(NDDS_CONFIG_LOG_CATEGORY_API, 
-    NDDS_CONFIG_LOG_VERBOSITY_STATUS_ALL);
-    */
+    // NDDSConfigLogger::get_instance()->
+    // set_verbosity_by_category(NDDS_CONFIG_LOG_CATEGORY_API, 
+    // NDDS_CONFIG_LOG_VERBOSITY_STATUS_ALL);
 
     return publisher_main(domainId, sample_count);
 }

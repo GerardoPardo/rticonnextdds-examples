@@ -1259,7 +1259,7 @@ struct PRESTypePlugin *SerializedTypePlugin_new(void)
 }
 
 
-struct PRESTypePlugin *SerializedTypePlugin_new2( struct DDS_TypeCode *type_code ) 
+struct PRESTypePlugin *SerializedTypePlugin_new2(struct DDS_TypeCode *type_code) 
 { 
     struct PRESTypePlugin *plugin = NULL;
     const struct PRESTypePluginVersion PLUGIN_VERSION = 
