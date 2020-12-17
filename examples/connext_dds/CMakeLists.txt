@@ -143,6 +143,10 @@ add_subdirectory(
 add_subdirectory(
     "${CMAKE_CURRENT_SOURCE_DIR}/dynamic_data_using_publisher_subscriber/c++11")
 
+# dynamic_data_using_discovery
+add_subdirectory(
+    "${CMAKE_CURRENT_SOURCE_DIR}/dynamic_data_using_discovery/c++98")
+
 # flat_data_api
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/flat_data_api/c++11")
 
